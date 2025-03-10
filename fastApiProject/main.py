@@ -4,20 +4,22 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
+from pydantic import BaseModel
+from passlib.context import CryptContext
 
 # Database Setup
-DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+DATABASE_URL = "postgresql://bohdansynytskyi@localhost:5432/flexwear"  # Use your username that you used for creating the database
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 # Define Models
 class User(Base):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    password = Column(String)
-    name = Column(String)
+    email = Column(String, primary_key=True, index=True)
+    password_hash = Column(String)
+    first_name = Column(String)
+    last_name = Column(String)
     birthdate = Column(String)
 
 class Category(Base):
@@ -44,7 +46,7 @@ class ProductVariation(Base):
 class UserPreference(Base):
     __tablename__ = "user_preferences"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_email = Column(String, ForeignKey("users.email"))  # Fix foreign key reference
     category_id = Column(Integer, ForeignKey("categories.id"))
     preferred_size = Column(String)
     preferred_color = Column(String)
@@ -52,14 +54,14 @@ class UserPreference(Base):
 class Wishlist(Base):
     __tablename__ = "wishlist"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_email = Column(String, ForeignKey("users.email"))  # Fix foreign key reference
     product_id = Column(Integer, ForeignKey("products.id"))
     product = relationship("Product")
 
 class Review(Base):
     __tablename__ = "reviews"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_email = Column(String, ForeignKey("users.email"))  # Fix foreign key reference
     product_id = Column(Integer, ForeignKey("products.id"))
     rating = Column(Float)
     comment = Column(String)
@@ -71,6 +73,19 @@ class Admin(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True)
     password = Column(String)
+
+# Password hashing setup
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# Pydantic model for input validation
+class SignUpRequest(BaseModel):
+    full_name: str
+    email: str
+    password: str
+
+class LogInRequest(BaseModel):
+    email: str
+    password: str
 
 class ProductLog(Base):
     __tablename__ = "product_logs"
@@ -121,6 +136,11 @@ def create_product(name: str, description: str, category_id: int, db: Session = 
 def read_categories(db: Session = Depends(get_db)):
     return db.query(Category).all()
 
+@app.get("/users/")
+def read_users(db: Session = Depends(get_db)):  # Fix function name
+    print("Users endpoint activated")
+    return db.query(User).all()
+
 @app.post("/categories/")
 def create_category(name: str, db: Session = Depends(get_db)):
     new_category = Category(name=name)
@@ -129,13 +149,55 @@ def create_category(name: str, db: Session = Depends(get_db)):
     db.refresh(new_category)
     return new_category
 
+
+@app.post("/signup/")
+def signup(user_data: SignUpRequest, db: Session = Depends(get_db)):
+    # Check if user already exists
+    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Extract first and last name
+    name_parts = user_data.full_name.split(" ", 1)
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+
+    # Hash the password before storing
+    # hashed_password = pwd_context.hash(user_data.password)
+
+    # Create user object
+    new_user = User(
+        email=user_data.email,
+        password_hash=user_data.password,
+        first_name=first_name,
+        last_name=last_name
+    )
+
+    # Add and commit the new user
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {"message": "User created successfully", "email": new_user.email}
+
+
+@app.post("/login/")
+def login(user_data: LogInRequest, db: Session = Depends(get_db)):
+    # Find user by email
+    user = db.query(User).filter(User.email == user_data.email).first()
+
+    if not user or user.password_hash != user_data.password:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    return {"message": "Login successful!", "email": user.email}
+
 @app.get("/wishlist/{user_id}")
-def get_wishlist(user_id: int, db: Session = Depends(get_db)):
-    return db.query(Wishlist).filter(Wishlist.user_id == user_id).all()
+def get_wishlist(user_id: str, db: Session = Depends(get_db)):  # Use str since user_email is the key
+    return db.query(Wishlist).filter(Wishlist.user_email == user_id).all()
 
 @app.post("/wishlist/")
-def add_to_wishlist(user_id: int, product_id: int, db: Session = Depends(get_db)):
-    new_wishlist_item = Wishlist(user_id=user_id, product_id=product_id)
+def add_to_wishlist(user_email: str, product_id: int, db: Session = Depends(get_db)):  # Use str for email
+    new_wishlist_item = Wishlist(user_email=user_email, product_id=product_id)
     db.add(new_wishlist_item)
     db.commit()
     db.refresh(new_wishlist_item)

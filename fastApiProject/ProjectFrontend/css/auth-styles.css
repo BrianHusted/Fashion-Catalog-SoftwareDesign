@@ -1,0 +1,130 @@
+/* General styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f8f8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Navbar */
+.navbar {
+    width: 100%;
+    background-color: black;
+    padding: 30px 20px;  /* Ensure same padding */
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;  /* Prevent padding issues */
+}
+
+/* Navbar Branding */
+.navbar h2 {
+    font-size: 28px;  /* Adjust size */
+    font-weight: bold;
+    font-family: "Arial", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-left: 20px;
+}
+
+.navbar input {
+    padding: 10px;
+    width: 300px;
+    border-radius: 5px;
+    border: none;
+}
+
+/* Navbar Links - Wishlist & Account */
+.navbar .nav-links {
+    display: flex;
+    gap: 15px;
+    margin-right: 20px;
+}
+
+.navbar .nav-links a {
+    text-decoration: none;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.navbar .nav-links a:hover {
+    color: #ccc;
+}
+
+/* Form Container */
+.form-container {
+    background: white;
+    padding: 20px;
+    width: 350px;
+    margin-top: 50px;
+    text-align: center;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-container h2 {
+    margin-bottom: 20px;
+}
+
+.form-container label {
+    display: block;
+    text-align: left;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-container input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.form-btn {
+    background-color: #6DA34D;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.form-btn:hover {
+    background-color: #4f7c35;
+}
+
+p {
+    margin-top: 10px;
+}
+
+p a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+p a:hover {
+    text-decoration: underline;
+}
+
+/* Fix Clickable "FLEXWEAR" Logo */
+.brand-logo {
+    text-decoration: none;  /* Remove underline */
+    color: white;  /* Ensure it stays white */
+    font-size: 28px;  /* Same size as homepage */
+    font-weight: bold;
+    font-family: "Arial", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.brand-logo:hover {
+    color: #ddd;  /* Optional: Light gray on hover */
+}
+
