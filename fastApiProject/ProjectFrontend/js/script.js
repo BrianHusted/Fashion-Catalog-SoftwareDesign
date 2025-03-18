@@ -50,83 +50,89 @@ async function login() {
 }
 
 // Load Products 
-/*
+
 document.addEventListener("DOMContentLoaded", () => {
+    console.log("Loading products from the server...");
     loadProducts();
 });
 
 async function loadProducts() {
     try {
-        const response = await fetch("http://localhost:8000/api/products"); // Update API endpoint if needed
+        const response = await fetch(`${apiUrl}/products`);
+
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        }
+
         const products = await response.json();
+        displayProducts(products);
 
-        const container = document.getElementById("productContainer");
-        container.innerHTML = "";  // Clear existing products
-
-        products.forEach(product => {
-            const productCard = `
-                <div class="product-card">
-                    <img src="${product.image}" alt="${product.name}">
-                    <h4>${product.name}</h4>
-                    <p>${product.description}</p>
-                    <button class="wishlist-btn" onclick="saveToWishlist('${product.id}')">Save to Wish List</button>
-                </div>
-            `;
-            container.innerHTML += productCard;
-        });
     } catch (error) {
         console.error("Error loading products:", error);
+        document.getElementById("productContainer").innerHTML = `<p class="error">Failed to load products.</p>`;
     }
 }
-*/
-document.addEventListener("DOMContentLoaded", () => {
-    console.log("Loading static products...");
-    loadProducts();
-});
 
-function loadProducts() {
+function displayProducts(products) {
     const container = document.getElementById("productContainer");
-
-    if (!container) {
-        console.warn("⚠️ Warning: 'productContainer' not found. Skipping loadProducts().");
-        return;  // Exit the function early
-    }
-
-    const products = [
-        {
-            id: 1,
-            name: "Black Shirt",
-            description: "Nice cotton shirt to keep you cool during workouts",
-            image: "assets/black-shirt.png" // Add this image in your assets folder
-        },
-        {
-            id: 2,
-            name: "Grey Shorts",
-            description: "Shorts built to keep you moving free",
-            image: "assets/grey-shorts.jpg" // Add this image in your assets folder
-        },
-        {
-            id: 3,
-            name: "White Hoodie",
-            description: "Cold out? No excuses with this hoodie!",
-            image: "assets/white-hoodie.jpg" // Add this image in your assets folder
-        }
-    ];
-    container.innerHTML = ""; // Clear previous content
+    container.innerHTML = "";  // Clear existing products
 
     products.forEach(product => {
-        const productCard = `
-            <div class="product-card">
-                <img src="${product.image}" alt="${product.name}">
-                <h4>${product.name}</h4>
-                <p>${product.description}</p>
-                <button class="wishlist-btn" onclick="saveToWishlist('${product.id}')">Save to Wish List</button>
-            </div>
-        `;
-        container.innerHTML += productCard;
-    });
+        const productElement = document.createElement("div");
+        productElement.classList.add("product-card");
 
-    console.log("Products displayed successfully!");
+        productElement.setAttribute("data-category-name", product.category_name);
+        const img = document.createElement("img");
+        img.src = product.picture_url;  // ✅ Use correct key
+        img.alt = product.name;
+
+        const title = document.createElement("h4");
+        title.textContent = product.name;
+
+        const desc = document.createElement("p");
+        desc.textContent = product.description;
+
+        const btn = document.createElement("button");
+        btn.textContent = "Save to Wish List";
+        btn.classList.add("wishlist-btn");
+        btn.onclick = () => saveToWishlist(product.product_id);  // ✅ Corrected ID
+
+        productElement.appendChild(img);
+        productElement.appendChild(title);
+        productElement.appendChild(desc);
+        productElement.appendChild(btn);
+
+        container.appendChild(productElement);
+    });
+}
+
+function filterByCategory(categoryName) {
+    const productCards = document.querySelectorAll(".product-card");
+
+    productCards.forEach(card => {
+        const productCategory = card.getAttribute("data-category-name");
+
+        if (categoryName === "all" || productCategory === categoryName) {
+            card.style.display = "block"; // Show products in the selected category
+        } else {
+            card.style.display = "none"; // Hide products that don't match
+        }
+    });
+}
+
+function searchProducts() {
+    const searchText = document.getElementById("searchInput").value.toLowerCase();
+    const productCards = document.querySelectorAll(".product-card");
+
+    productCards.forEach(card => {
+        const productName = card.querySelector("h4").textContent.toLowerCase();
+
+        if (productName.includes(searchText)) {
+            card.style.display = "block"; // Show matching products
+        } else {
+            card.style.display = "none"; // Hide non-matching products
+        }
+    });
 }
 
 // Wishlist function (not connected to a backend yet)

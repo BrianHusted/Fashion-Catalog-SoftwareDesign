@@ -11,7 +11,7 @@
 <!-- Navbar -->
 <div class="navbar">
     <h2><a href="index.html" class="brand-logo">FLEXWEAR</a></h2>
-    <input type="text" placeholder="Search Catalog">
+    <input type="text" id="searchInput" placeholder="Search Catalog" onkeyup="searchProducts()">
     <div>
         <div class="nav-links">
             <a href="wishlist.html">Wishlist</a>
@@ -22,10 +22,11 @@
 
 <!-- Filter Section -->
 <div class="filter-container">
-    <button>Filter FlexWear</button>
-    <button>Running</button>
-    <button>Hiking</button>
-    <button>Weightlifting</button>
+    <button onclick="filterByCategory('FlexWear')">Filter FlexWear</button>
+    <button onclick="filterByCategory('Running')">Running</button>
+    <button onclick="filterByCategory('Hiking')">Hiking</button>
+    <button onclick="filterByCategory('Weightlifting')">Weightlifting</button>
+    <button onclick="filterByCategory('all')">Show All</button> <!-- Reset Filter -->
 </div>
 
 <!-- Product Grid -->
