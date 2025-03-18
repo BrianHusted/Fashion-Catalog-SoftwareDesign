@@ -9,7 +9,7 @@ def connect_db():
     try:
         conn = psycopg2.connect(
             dbname="flexwear",
-            user="postgres",
+            user="",
             password="",  # Add your PostgreSQL password here
             host="localhost",
             port="5432"
@@ -29,43 +29,17 @@ class AdminGUI:
             self.conn = connect_db()
             self.cursor = self.conn.cursor()
             print("Cursor initialized successfully.")
-            # Verify product_logs table schema
-            self.cursor.execute("""
-                SELECT column_name FROM information_schema.columns 
-                WHERE table_name = 'product_logs' AND column_name = 'timestamp'
-            """)
-            if not self.cursor.fetchone():
-                self.cursor.execute("""
-                    CREATE TABLE product_logs (
-                        log_id SERIAL PRIMARY KEY,
-                        product_id INT,
-                        admin_id INT NOT NULL,
-                        action_type VARCHAR(50),
-                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (admin_id) REFERENCES admins(admin_id) ON DELETE SET NULL,
-                        FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE SET NULL
-                    )
-                """)
-                self.conn.commit()
-                print("Created product_logs table with timestamp column.")
-            else:
-                # Alter the product_id column to be nullable and update the foreign key constraint
-                self.cursor.execute("ALTER TABLE product_logs ALTER COLUMN product_id DROP NOT NULL")
-                self.cursor.execute("ALTER TABLE product_logs DROP CONSTRAINT product_logs_product_id_fkey")
-                self.cursor.execute("""
-                    ALTER TABLE product_logs 
-                    ADD CONSTRAINT product_logs_product_id_fkey 
-                    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE SET NULL
-                """)
-                self.conn.commit()
-                print("product_logs table updated: product_id nullable, ON DELETE SET NULL.")
 
-            # Verify admins table schema
+            # Verify if admins table exists
             self.cursor.execute("""
-                SELECT column_name FROM information_schema.columns 
-                WHERE table_name = 'admins' AND column_name = 'admin_id'
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'admins'
+                )
             """)
-            if not self.cursor.fetchone():
+            table_exists = self.cursor.fetchone()[0]
+
+            if not table_exists:
                 self.cursor.execute("""
                     CREATE TABLE admins (
                         admin_id SERIAL PRIMARY KEY,
@@ -76,14 +50,26 @@ class AdminGUI:
                     )
                 """)
                 self.conn.commit()
-                print("Created admins table with admin_id as SERIAL.")
+                print("Created admins table.")
+
+            # Ensure at least one admin exists
+            self.cursor.execute("SELECT COUNT(*) FROM admins")
+            count = self.cursor.fetchone()[0]
+
+            if count == 0:
+                self.cursor.execute("""
+                    INSERT INTO admins (username, email, password_hash)
+                    VALUES ('bohdan', 'b@gmail.com', '123')
+                """)
+                self.conn.commit()
+                print("Inserted default admin.")
+
+            # Print all admins for debugging
+            self.print_all_admins()
+
         except Exception as e:
             print(f"Failed to initialize cursor or verify tables: {e}")
             self.conn.rollback()
-            return
-
-        # Print all admins for debugging
-        self.print_all_admins()
 
         self.current_admin_id = None
 
