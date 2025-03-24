@@ -1,20 +1,10 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime, create_engine
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session, relationship
-from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
+from sqlalchemy.orm import relationship
 from pydantic import BaseModel
-from passlib.context import CryptContext
 from typing import Optional
 
-# Database Setup
-DATABASE_URL = "postgresql://localhost:5432/flexwear"  # Use your username that you used for creating the database
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-
-# Define Models
 class User(Base):
     __tablename__ = "users"
     email = Column(String, primary_key=True, index=True)
@@ -71,10 +61,7 @@ class Admin(Base):
     email = Column(String, unique=True)
     password = Column(String)
 
-# Password hashing setup
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Pydantic model for input validation
 class SignUpRequest(BaseModel):
     full_name: str
     email: str
@@ -84,39 +71,6 @@ class LogInRequest(BaseModel):
     email: str
     password: str
 
-# class ProductLog(Base):
-#     __tablename__ = "product_logs"
-#     id = Column(Integer, primary_key=True, index=True)
-#     admin_id = Column(Integer, ForeignKey("admins.id"))
-#     product_id = Column(Integer, ForeignKey("products.id"))
-#     action = Column(String)
-#     timestamp = Column(DateTime, default=datetime.utcnow)
-#     product = relationship("Product")
-
-# Create Tables
-Base.metadata.create_all(bind=engine)
-
-# Dependency to get DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# FastAPI App
-app = FastAPI()
-
-# CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
-
-# Routes
 class ProductResponse(BaseModel):
     product_id: int
     name: str
@@ -127,37 +81,11 @@ class ProductResponse(BaseModel):
     class Config:
         orm_mode = True
 
-
-@app.get("/products/", response_model=list[ProductResponse])
-def read_products(db: Session = Depends(get_db)):
-    products = db.query(Product).join(Product.category).all()
-
-    return [
-        ProductResponse(
-            product_id=p.product_id,
-            name=p.name,
-            description=p.description,
-            category_name=p.category.name,  # ✅ Get category name from relationship
-            picture_url=p.picture_url
-        ) for p in products
-    ]
-
-
-
-
-
-
-
-
-
-# @app.get("/wishlist/{user_id}")
-# def get_wishlist(user_id: str, db: Session = Depends(get_db)):  # Use str since user_email is the key
-#     return db.query(Wishlist).filter(Wishlist.user_email == user_id).all()
-
-# @app.post("/wishlist/")
-# def add_to_wishlist(user_email: str, product_id: int, db: Session = Depends(get_db)):  # Use str for email
-#     new_wishlist_item = Wishlist(user_email=user_email, product_id=product_id)
-#     db.add(new_wishlist_item)
-#     db.commit()
-#     db.refresh(new_wishlist_item)
-#     return new_wishlist_item
+# class ProductLog(Base):
+#     __tablename__ = "product_logs"
+#     id = Column(Integer, primary_key=True, index=True)
+#     admin_id = Column(Integer, ForeignKey("admins.id"))
+#     product_id = Column(Integer, ForeignKey("products.id"))
+#     action = Column(String)
+#     timestamp = Column(DateTime, default=datetime.utcnow)
+#     product = relationship("Product")
