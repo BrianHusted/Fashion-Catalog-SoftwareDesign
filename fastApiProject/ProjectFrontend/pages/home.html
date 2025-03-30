@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FlexWear | Home</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="../css/home-styles.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <div class="navbar">
+    <h2><a href="home.html" class="brand-logo">FLEXWEAR</a></h2>
+    <input type="text" id="searchInput" placeholder="Search Catalog" onkeypress="handleSearchKey(event)">
+  </div>
+
+
+
+  <!-- Hero Section -->
+<div class="hero-section">
+    <div class="hero">
+      <h1>Welcome to FlexWear</h1>
+      <p>Performance wear that moves with you</p>
+      <div class="hero-buttons">
+        <button onclick="location.href='account.html'">Go to Account</button>
+        <button onclick="location.href='wishlist.html'">Go to Wishlist</button>
+        <button onclick="location.href='index.html'">Browse Catalog</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suggested Products -->
+  <h2 class="section-title">Recommended for You</h2>
+  <div id="suggestedProducts" class="product-container">
+    <!-- JS will insert product cards here -->
+  </div>
+
+  <script src="../js/script.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      loadSuggestedProducts();
+    });
+  </script>
+
+</body>
+</html>

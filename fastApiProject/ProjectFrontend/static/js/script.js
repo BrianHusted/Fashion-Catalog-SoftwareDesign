@@ -1,16 +1,13 @@
 const apiUrl = "http://127.0.0.1:8000";  // Change this if needed
 
-
-async function signup(){ // Prevent page reload
-
-    // Get form values
+// Signup Function
+async function signup() {
     const fullName = document.getElementById("fullName").value;
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
-    // Send request to FastAPI backend
     try {
-        const response = await fetch(`${apiUrl}/signup_request`, {
+        const response = await fetch(`${apiUrl}/signup_request/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ full_name: fullName, email: email, password: password })
@@ -19,7 +16,7 @@ async function signup(){ // Prevent page reload
         const data = await response.json();
         if (response.ok) {
             alert("Signup successful!");
-            window.location.href = "/login";
+            window.location.href = "login.html";
         } else {
             alert("Signup failed: " + data.detail);
         }
@@ -34,7 +31,7 @@ async function login() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
-    const response = await fetch(`${apiUrl}/login_request`, {
+    const response = await fetch(`${apiUrl}/login_request/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -43,161 +40,159 @@ async function login() {
     const data = await response.json();
     if (response.ok) {
         alert("Login successful!");
-        window.location.href = "/index";
+        window.location.href = "home.html";
     } else {
         alert("Invalid credentials!");
     }
 }
 
-// Load Products 
+// Load Products (generic)
+async function loadProducts({ containerId = "productContainer", limit = null } = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
-document.addEventListener("DOMContentLoaded", () => {
-    loadProducts();
-});
-
-async function loadProducts() {
     try {
-        const response = await fetch(`${apiUrl}/products`);
-
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-        }
-
-        const products = await response.json();
-        displayProducts(products);
-
-    } catch (error) {
-        console.error("Error loading products:", error);
-        document.getElementById("productContainer").innerHTML = `<p class="error">Failed to load products.</p>`;
+        const response = await fetch(`${apiUrl}/products/`);
+        const allProducts = await response.json();
+        const products = limit ? allProducts.slice(0, limit) : allProducts;
+        renderProducts(container, products);
+    } catch (err) {
+        console.warn("⚠️ Backend unavailable. Loading demo products...");
+        const demoProducts = getDemoProducts();
+        const products = limit ? demoProducts.slice(0, limit) : demoProducts;
+        renderProducts(container, products);
     }
 }
 
-function displayProducts(products) {
-    const container = document.getElementById("productContainer");
-    container.innerHTML = "";  // Clear existing products
+// Product Suggestions (Homepage)
+async function loadSuggestedProducts() {
+    const container = document.getElementById("suggestedProducts");
+    if (!container) return;
 
+    try {
+        const response = await fetch(`${apiUrl}/products/`);
+        const allProducts = await response.json();
+        const limited = allProducts.slice(0, 3);
+        renderProducts(container, limited);
+    } catch (err) {
+        console.warn("⚠️ Backend unavailable. Loading demo products...");
+        const demo = getDemoProducts().slice(0, 3);
+        renderProducts(container, demo);
+    }
+}
+
+// Load Product by ID (for detail page)
+function loadProductById(id) {
+    const container = document.getElementById("productDetails");
+    if (!container) return;
+
+    fetch(`${apiUrl}/products/`)
+        .then(res => res.json())
+        .then(products => {
+            const product = products.find(p => p.product_id === id);
+            if (product) {
+                renderProductDetail(container, product);
+            } else {
+                throw new Error("Product not found in backend");
+            }
+        })
+        .catch(() => {
+            console.warn("⚠️ Backend failed, using demo data...");
+            const demo = getDemoProducts();
+            const product = demo.find(p => p.product_id === id);
+            if (product) renderProductDetail(container, product);
+            else container.innerHTML = "<p>Product not found.</p>";
+        });
+}
+
+function renderProductDetail(container, product) {
+    container.innerHTML = `
+        <img src="../assets/${product.picture_url}" alt="${product.name}">
+        <div class="product-info">
+            <h2>${product.name}</h2>
+            <p><strong>Description:</strong> ${product.description}</p>
+            <p><strong>Category:</strong> ${product.category_name}</p>
+            <button class="wishlist-btn" onclick="saveToWishlist(${product.product_id})">Save to Wish List</button>
+        </div>
+    `;
+}
+
+// Render Product Cards
+function renderProducts(container, products) {
+    container.innerHTML = "";
     products.forEach(product => {
-        const productElement = document.createElement("div");
-        productElement.classList.add("product-card");
-
-        productElement.setAttribute("data-category-name", product.category_name);
-        const img = document.createElement("img");
-        img.src = product.picture_url;  // ✅ Use correct key
-        img.alt = product.name;
-
-        const title = document.createElement("h4");
-        title.textContent = product.name;
-
-        const desc = document.createElement("p");
-        desc.textContent = product.description;
-
-        const btn = document.createElement("button");
-        btn.textContent = "Save to Wish List";
-        btn.classList.add("wishlist-btn");
-        btn.onclick = () => saveToWishlist(product.product_id);  // ✅ Corrected ID
-
-        productElement.appendChild(img);
-        productElement.appendChild(title);
-        productElement.appendChild(desc);
-        productElement.appendChild(btn);
-
-        container.appendChild(productElement);
+        container.innerHTML += `
+        <div class="product-card" data-category-name="${product.category_name}">
+            <div class="clickable-area" onclick="window.location.href='product.html?id=${product.product_id}'">
+                <img src="../assets/${product.picture_url}" alt="${product.name}">
+                <h4>${product.name}</h4>
+                <p>${product.description}</p>
+            </div>
+            <button class="wishlist-btn" onclick="event.stopPropagation(); saveToWishlist(${product.product_id})">Save to Wish List</button>
+        </div>
+        `;
     });
 }
 
+// Filter Products by Category
 function filterByCategory(categoryName) {
     const productCards = document.querySelectorAll(".product-card");
-
     productCards.forEach(card => {
         const productCategory = card.getAttribute("data-category-name");
-
-        if (categoryName === "all" || productCategory === categoryName) {
-            card.style.display = "block"; // Show products in the selected category
-        } else {
-            card.style.display = "none"; // Hide products that don't match
-        }
+        card.style.display = (categoryName === "all" || productCategory === categoryName) ? "block" : "none";
     });
 }
 
+// Search by Name (Live Filter - used only on index)
 function searchProducts() {
     const searchText = document.getElementById("searchInput").value.toLowerCase();
     const productCards = document.querySelectorAll(".product-card");
-
     productCards.forEach(card => {
         const productName = card.querySelector("h4").textContent.toLowerCase();
-
-        if (productName.includes(searchText)) {
-            card.style.display = "block"; // Show matching products
-        } else {
-            card.style.display = "none"; // Hide non-matching products
-        }
+        card.style.display = productName.includes(searchText) ? "block" : "none";
     });
 }
 
-// document.addEventListener("DOMContentLoaded", () => {
-//     console.log("Loading static products...");
-//     loadProducts();
-// });
-//
-// function loadProducts() {
-//     const container = document.getElementById("productContainer");
-//
-//     if (!container) {
-//         console.warn("⚠️ Warning: 'productContainer' not found. Skipping loadProducts().");
-//         return;  // Exit the function early
-//     }
-//
-//     const products = [
-//         {
-//             id: 1,
-//             name: "Black Shirt",
-//             description: "Nice cotton shirt to keep you cool during workouts",
-//             image: "assets/black-shirt.png" // Add this image in your assets folder
-//         },
-//         {
-//             id: 2,
-//             name: "Grey Shorts",
-//             description: "Shorts built to keep you moving free",
-//             image: "assets/grey-shorts.jpg" // Add this image in your assets folder
-//         },
-//         {
-//             id: 3,
-//             name: "White Hoodie",
-//             description: "Cold out? No excuses with this hoodie!",
-//             image: "assets/white-hoodie.jpg" // Add this image in your assets folder
-//         }
-//     ];
-//     container.innerHTML = ""; // Clear previous content
-//
-//     products.forEach(product => {
-//         const productCard = `
-//             <div class="product-card">
-//                 <img src="${product.image}" alt="${product.name}">
-//                 <h4>${product.name}</h4>
-//                 <p>${product.description}</p>
-//                 <button class="wishlist-btn" onclick="saveToWishlist('${product.id}')">Save to Wish List</button>
-//             </div>
-//         `;
-//         container.innerHTML += productCard;
-//     });
-//
-//     console.log("Products displayed successfully!");
-// }
+// Search Bar Enter Key Handler
+function handleSearchKey(event) {
+    if (event.key === "Enter") {
+        const query = document.getElementById("searchInput").value.trim();
+        if (query !== "") {
+            window.location.href = `index.html?search=${encodeURIComponent(query)}`;
+        }
+    }
+}
 
-// Wishlist function (not connected to a backend yet)
-function saveToWishlist(productId) {
+// Wishlist Button (to be connected later)
+async function saveToWishlist(productId) {
     alert(`Product ${productId} added to wishlist!`);
 }
 
-// Save to Wishlist
-async function saveToWishlist(productId) {
-    alert("Added to wishlist!");  // In a real scenario, make an API call
+// Demo Product Data
+function getDemoProducts() {
+    return [
+        {
+            product_id: 1,
+            name: "Black Shirt",
+            description: "Lightweight cotton shirt for your workouts.",
+            picture_url: "black-shirt.png",
+            category_name: "Weightlifting"
+        },
+        {
+            product_id: 2,
+            name: "Grey Shorts",
+            description: "Freedom of motion with these comfy shorts.",
+            picture_url: "grey-shorts.jpg",
+            category_name: "Running"
+        },
+        {
+            product_id: 3,
+            name: "White Hoodie",
+            description: "Stay warm without losing flexibility.",
+            picture_url: "white-hoodie.jpg",
+            category_name: "Hiking"
+        }
+    ];
 }
 
-// Load products on catalog page
-if (document.getElementById("productContainer")) {
-    loadProducts();
-}
-
-
-console.log("script.js is running!");
+console.log("✅ script.js is running!");

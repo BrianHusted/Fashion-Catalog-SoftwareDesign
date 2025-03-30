@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FlexWear | Product</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    body {
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
+    }
+  
+    .product-detail-container {
+      display: flex;
+      gap: 40px;
+      margin: 80px auto 60px;
+      padding: 40px;
+      max-width: 960px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      align-items: center;
+    }
+  
+    .product-detail-container img {
+      width: 100%;
+      max-width: 350px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+  
+    .product-info {
+      flex: 1;
+      padding: 0 10px;
+    }
+  
+    .product-info h2 {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+  
+    .product-info p {
+      margin: 10px 0;
+      font-size: 16px;
+    }
+  
+    .wishlist-btn {
+      padding: 12px 20px;
+      font-size: 15px;
+      background-color: #6DA34D;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+  
+    .wishlist-btn:hover {
+      background-color: #4f7c35;
+    }
+
+    .top-nav-back {
+      padding: 20px 40px 0;
+    }
+
+    .back-link {
+      display: inline-block;
+      background-color: #2a6cd4; /* Blue button */
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background-color 0.2s ease;
+      margin-top: 10px;
+    }
+
+.back-link:hover {
+  background-color: #1b4da8;
+}
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <div class="navbar">
+    <h2><a href="home.html" class="brand-logo">FLEXWEAR</a></h2>
+    <input type="text" id="searchInput" placeholder="Search Catalog" onkeypress="handleSearchKey(event)">
+    <div class="nav-links">
+      <a href="wishlist.html">Wishlist</a>
+      <a href="account.html">Account</a>
+    </div>
+  </div>
+
+  <div class="top-nav-back">
+    <a href="index.html" class="back-link">← Back to Catalog</a>
+  </div>
+
+  <!-- Product Detail Section -->
+  <div class="product-detail-container" id="productDetails">
+    <!-- Populated dynamically -->
+  </div>
+
+  <script src="../js/script.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const productId = parseInt(urlParams.get("id"));
+      if (!productId) return;
+
+      loadProductById(productId);
+    });
+  </script>
+  <script>
+    function handleSearchKey(event) {
+      if (event.key === "Enter") {
+        const query = document.getElementById("searchInput").value.trim();
+        if (query) {
+          window.location.href = `index.html?search=${encodeURIComponent(query)}`;
+        }
+      }
+    }
+  </script>
+</body>
+</html>

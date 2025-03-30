@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Account - FlexWear</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    .account-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .account-container label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .account-container input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .account-container button {
+      margin-top: 25px;
+      padding: 12px 20px;
+      background-color: #6DA34D;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .account-container button:hover {
+      background-color: #4f7c35;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <h2><a href="home.html" class="brand-logo">FLEXWEAR</a></h2>
+    <input type="text" id="searchInput" placeholder="Search Catalog" onkeypress="handleSearchKey(event)">
+    <div class="nav-links">
+      <a href="wishlist.html">Wishlist</a>
+      <a href="account.html">Account</a>
+    </div>
+  </div>
+
+  <div class="account-container">
+    <h2>My Account</h2>
+    <form id="accountForm">
+      <label for="email">Email (readonly)</label>
+      <input type="email" id="email" readonly>
+
+      <label for="firstName">First Name</label>
+      <input type="text" id="firstName">
+
+      <label for="lastName">Last Name</label>
+      <input type="text" id="lastName">
+
+      <label for="birthdate">Birthdate</label>
+      <input type="date" id="birthdate">
+
+      <label for="password">New Password</label>
+      <input type="password" id="password" placeholder="Leave blank to keep existing password">
+
+      <button type="button" onclick="updateAccount()">Update Account</button>
+    </form>
+  </div>
+
+  <script src="../js/script.js"></script>
+  <script>
+    async function loadAccount() {
+      const userEmail = localStorage.getItem("userEmail");
+      if (!userEmail) {
+        alert("You are not logged in.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      try {
+        const response = await fetch(`${apiUrl}/users/`);
+        const users = await response.json();
+        const user = users.find(u => u.email === userEmail);
+
+        if (!user) {
+          alert("User not found.");
+          return;
+        }
+
+        document.getElementById("email").value = user.email;
+        document.getElementById("firstName").value = user.first_name || "";
+        document.getElementById("lastName").value = user.last_name || "";
+        document.getElementById("birthdate").value = user.birthdate || "";
+      } catch (err) {
+        console.error("Error loading user data:", err);
+      }
+    }
+
+    async function updateAccount() {
+      const email = document.getElementById("email").value;
+      const first_name = document.getElementById("firstName").value;
+      const last_name = document.getElementById("lastName").value;
+      const birthdate = document.getElementById("birthdate").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const response = await fetch(`${apiUrl}/users/${email}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ first_name, last_name, birthdate, password })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          alert("Account updated successfully!");
+        } else {
+          alert("Failed to update account: " + data.detail);
+        }
+      } catch (err) {
+        console.error("Error updating account:", err);
+        alert("An error occurred. Please try again.");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadAccount);
+  </script>
+</body>
+</html>
