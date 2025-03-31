@@ -63,6 +63,7 @@ pip install fastapi uvicorn sqlalchemy psycopg2-binary passlib python-multipart 
 cd fastApiProject
 uvicorn script:app --reload
 ```
+Visit the Fashion Catalog at: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 Visit the API docs at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ### 4. Run the Admin GUI
@@ -84,7 +85,6 @@ python Admin_Main.py
 
 ## 📌 Notes
 
-- JWT or OAuth authentication is **not yet implemented**
 - No deployment tools used; intended for local use
 - Make sure PostgreSQL is running locally
 
