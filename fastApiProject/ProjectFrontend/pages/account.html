@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Account - FlexWear</title>
-  <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="/static/css/styles.css" />
   <style>
     .account-container {
       max-width: 600px;
@@ -43,16 +43,22 @@
     .account-container button:hover {
       background-color: #4f7c35;
     }
+
+    .section-divider {
+      margin: 40px 0;
+      border-top: 1px solid #eee;
+      padding-top: 20px;
+    }
   </style>
 </head>
 <body>
 
   <div class="navbar">
-    <h2><a href="home.html" class="brand-logo">FLEXWEAR</a></h2>
+    <h2><a href="/home" class="brand-logo">FLEXWEAR</a></h2>
     <input type="text" id="searchInput" placeholder="Search Catalog" onkeypress="handleSearchKey(event)">
     <div class="nav-links">
-      <a href="wishlist.html">Wishlist</a>
-      <a href="account.html">Account</a>
+      <a href="/wishlist">Wishlist</a>
+      <a href="/account">Account</a>
     </div>
   </div>
 
@@ -76,15 +82,40 @@
 
       <button type="button" onclick="updateAccount()">Update Account</button>
     </form>
+
+    <div class="section-divider">
+      <h2>Create New Product</h2>
+      <form id="productForm" enctype="multipart/form-data">
+        <label for="productName">Product Name</label>
+        <input type="text" id="productName" required>
+
+        <label for="productDescription">Description</label>
+        <input type="text" id="productDescription" required>
+
+        <label for="productCategory">Category</label>
+        <select id="productCategory" required>
+          <option value="">Select a category</option>
+          <option value="1">FlexWear</option>
+          <option value="2">Running</option>
+          <option value="3">Hiking</option>
+          <option value="4">Weightlifting</option>
+        </select>
+
+        <label for="productImage">Product Image</label>
+        <input type="file" id="productImage" accept="image/*" required>
+
+        <button type="submit" onclick="createProduct(event)">Create Product</button>
+      </form>
+    </div>
   </div>
 
-  <script src="../js/script.js"></script>
+  <script src="/static/js/script.js"></script>
   <script>
     async function loadAccount() {
       const userEmail = localStorage.getItem("userEmail");
       if (!userEmail) {
         alert("You are not logged in.");
-        window.location.href = "login.html";
+        window.location.href = "/login";
         return;
       }
 

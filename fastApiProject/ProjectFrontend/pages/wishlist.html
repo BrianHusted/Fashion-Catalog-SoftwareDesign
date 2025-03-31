@@ -3,143 +3,92 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Wishlist - FlexWear</title>
-  <link rel="stylesheet" href="../css/styles.css">
+  <title>My Wishlist - Fashion Catalog</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    .wishlist-card {
-      border: 1px solid #ccc;
-      padding: 16px;
-      border-radius: 12px;
-      background: #fff;
+    .wishlist-container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .wishlist-header {
+      margin-bottom: 2rem;
       text-align: center;
     }
-    .wishlist-card img {
-      max-width: 100%;
-      border-radius: 8px;
+
+    .wishlist-header h1 {
+      font-size: 2.5rem;
+      color: #333;
+      margin-bottom: 1rem;
     }
-    .wishlist-card h3 {
-      font-size: 20px;
-      margin: 10px 0 5px;
-    }
-    .wishlist-card p {
-      font-size: 14px;
-      color: #444;
-    }
-    #wishlistContainer {
+
+    .wishlist-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 30px;
       padding: 30px;
-      max-width: 1200px;
-      margin: auto;
     }
-    .cta-btn {
+
+    .empty-wishlist {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .empty-wishlist p {
+      font-size: 1.2rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+
+    .empty-wishlist .primary-btn {
       display: inline-block;
+      padding: 0.75rem 1.5rem;
       background-color: #6DA34D;
       color: white;
-      padding: 12px 24px;
-      border-radius: 8px;
       text-decoration: none;
-      font-weight: bold;
-      margin: 40px auto;
-      text-align: center;
-      transition: 0.3s;
+      border-radius: 6px;
+      transition: background-color 0.2s;
     }
-    .cta-btn:hover {
+
+    .empty-wishlist .primary-btn:hover {
       background-color: #4f7c35;
-    }
-    .wishlist-actions {
-      text-align: center;
     }
   </style>
 </head>
 <body>
 
-<!-- Navbar -->
-<div class="navbar">
-  <h2><a href="home.html" class="brand-logo">FLEXWEAR</a></h2>
-  <input type="text" id="searchInput" placeholder="Search Catalog" onkeypress="handleSearchKey(event)">
+<nav class="navbar">
+  <div class="nav-brand">Fashion Catalog</div>
   <div class="nav-links">
-    <a href="wishlist.html">Wishlist</a>
-    <a href="account.html">Account</a>
+    <a href="/home">Home</a>
+    <a href="/index">Products</a>
+    <a href="/wishlist">Wishlist</a>
+    <a href="/account">Account</a>
   </div>
-</div>
+</nav>
 
-<!-- Wishlist Section -->
-<div class="wishlist-container">
-  <h2>Your Wishlist</h2>
-  <div id="wishlistContainer"></div>
-  <div class="wishlist-actions">
-    <a href="index.html" class="cta-btn">➕ Add More Items</a>
+<main class="wishlist-container">
+  <div class="wishlist-header">
+    <h1>My Wishlist</h1>
   </div>
-</div>
 
+  <!-- Wishlist Grid -->
+  <div id="wishlistContainer" class="wishlist-grid">
+    <!-- Wishlist items will be loaded here -->
+  </div>
+</main>
+
+<footer class="footer">
+  <p>&copy; 2024 Fashion Catalog. All rights reserved.</p>
+</footer>
+
+<script src="/static/js/script.js"></script>
 <script>
-const apiUrl = "http://127.0.0.1:8000";
-
-async function loadWishlist() {
-  const container = document.getElementById("wishlistContainer");
-  container.innerHTML = "";
-
-  const userEmail = localStorage.getItem("userEmail");
-  if (!userEmail) {
-    container.innerHTML = "<p>Please log in to view your wishlist.</p>";
-    return;
-  }
-
-  try {
-    const res = await fetch(`${apiUrl}/wishlist/${userEmail}`);
-    const wishlist = await res.json();
-
-    if (!wishlist.length) {
-      container.innerHTML = "<p>Your wishlist is empty.</p>";
-      return;
-    }
-
-    const productRes = await fetch(`${apiUrl}/products/`);
-    const products = await productRes.json();
-
-    wishlist.forEach(item => {
-      const product = products.find(p => p.product_id === item.product_id);
-      if (!product) return;
-
-      const card = document.createElement("div");
-      card.className = "wishlist-card";
-      card.innerHTML = `
-        <img src="../assets/${product.picture_url}" alt="${product.name}">
-        <h3>${product.name}</h3>
-        <p>${product.description}</p>
-        <div class="wishlist-btns">
-          <button class="wishlist-btn" onclick="removeFromWishlist(${product.product_id})">🗑 Remove</button>
-        </div>
-      `;
-      container.appendChild(card);
-    });
-  } catch (err) {
-    console.error("Failed to load wishlist:", err);
-    container.innerHTML = "<p>Failed to load wishlist. Try again later.</p>";
-  }
-}
-
-async function removeFromWishlist(productId) {
-  const userEmail = localStorage.getItem("userEmail");
-  if (!userEmail) return;
-
-  // You can later add a delete endpoint. For now just mock it visually:
-  alert(`Wishlist item with product ID ${productId} would be removed (implement DELETE in backend).`);
-  loadWishlist();
-}
-
-function handleSearchKey(event) {
-  if (event.key === "Enter") {
-    const query = document.getElementById("searchInput").value.trim();
-    if (query) {
-      window.location.href = `index.html?search=${encodeURIComponent(query)}`;
-    }
-  }
-}
-
-document.addEventListener("DOMContentLoaded", loadWishlist);
+  document.addEventListener('DOMContentLoaded', function() {
+    loadWishlist();
+  });
 </script>
 </body>
 </html>

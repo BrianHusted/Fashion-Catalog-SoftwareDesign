@@ -1,4 +1,5 @@
 const apiUrl = "http://127.0.0.1:8000";  // Change this if needed
+let currentUserEmail = null;  // Store the current user's email
 
 // Signup Function
 async function signup() {
@@ -16,7 +17,7 @@ async function signup() {
         const data = await response.json();
         if (response.ok) {
             alert("Signup successful!");
-            window.location.href = "login.html";
+            window.location.href = "/login";
         } else {
             alert("Signup failed: " + data.detail);
         }
@@ -31,18 +32,285 @@ async function login() {
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
 
-    const response = await fetch(`${apiUrl}/login_request/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-    });
+    try {
+        const response = await fetch(`${apiUrl}/login_request/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+        });
 
-    const data = await response.json();
-    if (response.ok) {
-        alert("Login successful!");
-        window.location.href = "home.html";
-    } else {
-        alert("Invalid credentials!");
+        const data = await response.json();
+        if (response.ok) {
+            currentUserEmail = email;  // Store the user's email
+            localStorage.setItem('userEmail', email);  // Store in localStorage for persistence
+            console.log("Login successful, email stored:", email);  // Debug log
+            alert("Login successful!");
+            window.location.href = "/home";
+        } else {
+            alert("Invalid credentials!");
+        }
+    } catch (error) {
+        console.error("Login error:", error);
+        alert("An error occurred during login. Please try again.");
+    }
+}
+
+// Check for stored user email on page load
+document.addEventListener('DOMContentLoaded', () => {
+    currentUserEmail = localStorage.getItem('userEmail');
+    if (currentUserEmail) {
+        // If we're on the wishlist page, load the wishlist
+        if (window.location.pathname === '/wishlist') {
+            loadWishlist();
+        }
+    }
+});
+
+// Load categories from the backend
+async function loadCategories() {
+    try {
+        const response = await fetch(`${apiUrl}/categories/`);
+        const categories = await response.json();
+        
+        const categoryFilters = document.getElementById('categoryFilters');
+        if (categoryFilters) {
+            categoryFilters.innerHTML = categories.map(category => `
+                <div class="filter-option">
+                    <input type="checkbox" id="category${category.category_id}" 
+                           class="filter-checkbox" data-category="${category.name}">
+                    <label for="category${category.category_id}" class="filter-label">${category.name}</label>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+// Setup filter event listeners
+function setupFilterListeners() {
+    const filterCheckboxes = document.querySelectorAll('.filter-checkbox');
+    filterCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            // Determine if we're on the products page or wishlist page
+            const isProductsPage = document.getElementById('productContainer') !== null;
+            if (isProductsPage) {
+                applyProductFilters();
+            } else {
+                applyWishlistFilters();
+            }
+        });
+    });
+}
+
+// Apply filters to products
+function applyProductFilters() {
+    const selectedCategories = Array.from(document.querySelectorAll('[data-category]:checked'))
+        .map(cb => cb.dataset.category);
+    const selectedSizes = Array.from(document.querySelectorAll('[data-size]:checked'))
+        .map(cb => cb.dataset.size);
+    const selectedColors = Array.from(document.querySelectorAll('[data-color]:checked'))
+        .map(cb => cb.dataset.color);
+
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(card => {
+        const category = card.dataset.category;
+        let variations = [];
+        try {
+            variations = JSON.parse(card.dataset.variations || '[]');
+        } catch (e) {
+            console.error('Error parsing variations:', e);
+        }
+
+        // Category matching
+        const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(category);
+
+        // Size matching - show if any variation matches any selected size
+        const matchesSize = selectedSizes.length === 0 || 
+            variations.some(v => selectedSizes.includes(v.size));
+
+        // Color matching - show if any variation matches any selected color
+        const matchesColor = selectedColors.length === 0 || 
+            variations.some(v => selectedColors.includes(v.color));
+
+        // Show the item if it matches all active filters
+        const shouldShow = matchesCategory && matchesSize && matchesColor;
+        card.style.display = shouldShow ? 'block' : 'none';
+    });
+}
+
+// Apply filters to wishlist
+function applyWishlistFilters() {
+    const selectedCategories = Array.from(document.querySelectorAll('[data-category]:checked'))
+        .map(cb => cb.dataset.category);
+    const selectedSizes = Array.from(document.querySelectorAll('[data-size]:checked'))
+        .map(cb => cb.dataset.size);
+    const selectedColors = Array.from(document.querySelectorAll('[data-color]:checked'))
+        .map(cb => cb.dataset.color);
+
+    const items = document.querySelectorAll('.wishlist-item');
+    items.forEach(item => {
+        const category = item.dataset.category;
+        let variations = [];
+        try {
+            variations = JSON.parse(item.dataset.variations || '[]');
+        } catch (e) {
+            console.error('Error parsing variations:', e);
+        }
+
+        // Category matching
+        const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(category);
+
+        // Size matching - show if any variation matches any selected size
+        const matchesSize = selectedSizes.length === 0 || 
+            variations.some(v => selectedSizes.includes(v.size));
+
+        // Color matching - show if any variation matches any selected color
+        const matchesColor = selectedColors.length === 0 || 
+            variations.some(v => selectedColors.includes(v.color));
+
+        // Show the item if it matches all active filters
+        const shouldShow = matchesCategory && matchesSize && matchesColor;
+        item.style.display = shouldShow ? 'block' : 'none';
+    });
+}
+
+// Update loadWishlist function to be simpler without filtering
+async function loadWishlist() {
+    if (!currentUserEmail) {
+        currentUserEmail = localStorage.getItem('userEmail');
+        if (!currentUserEmail) {
+            alert("Please log in to view your wishlist");
+            window.location.href = "/login";
+            return;
+        }
+    }
+
+    try {
+        const response = await fetch(`${apiUrl}/wishlist/${currentUserEmail}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Wishlist error:", errorData);
+            throw new Error(errorData.detail || 'Failed to load wishlist');
+        }
+        const wishlistItems = await response.json();
+        
+        const container = document.getElementById("wishlistContainer");
+        if (!container) {
+            console.error("Wishlist container not found");
+            return;
+        }
+
+        container.innerHTML = "";
+        if (wishlistItems.length === 0) {
+            container.innerHTML = `
+                <div class="empty-wishlist">
+                    <p>Your wishlist is empty.</p>
+                    <a href="/index" class="primary-btn">Browse Products</a>
+                </div>
+            `;
+            return;
+        }
+
+        wishlistItems.forEach(item => {
+            const imagePath = item.product.picture_url ? `/static/assets/products/${item.product.picture_url}` : '/static/assets/default-product.jpg';
+            const addedDate = new Date(item.added_at).toLocaleDateString();
+            
+            // Create variations summary
+            const variationsSummary = renderVariationsSummary(item.product.variations);
+            
+            container.innerHTML += `
+                <div class="wishlist-item">
+                    <img src="${imagePath}" alt="${item.product.name}" class="wishlist-item-image">
+                    <div class="wishlist-item-info">
+                        <h3 class="wishlist-item-title">${item.product.name}</h3>
+                        <p class="wishlist-item-category">Category: ${item.product.category_name}</p>
+                        <p class="wishlist-item-description">${item.product.description}</p>
+                        <div class="variations-summary">
+                            ${variationsSummary}
+                        </div>
+                        <p class="wishlist-item-date">Added on ${addedDate}</p>
+                        <button class="remove-from-wishlist" onclick="removeFromWishlist(${item.product.product_id})">
+                            <i class="fas fa-trash"></i> Remove from Wishlist
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (error) {
+        console.error("Error loading wishlist:", error);
+        alert("Failed to load wishlist. Please try again.");
+    }
+}
+
+// Save to Wishlist
+async function saveToWishlist(productId) {
+    if (!currentUserEmail) {
+        currentUserEmail = localStorage.getItem('userEmail');  // Try to get email from localStorage
+        if (!currentUserEmail) {
+            alert("Please log in to add items to your wishlist");
+            window.location.href = "/login";
+            return;
+        }
+    }
+
+    console.log("Attempting to add to wishlist:", { email: currentUserEmail, productId });  // Debug log
+
+    try {
+        const response = await fetch(`${apiUrl}/wishlist/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: currentUserEmail,
+                product_id: productId
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert("Added to wishlist!");
+            // If we're on the wishlist page, reload it
+            if (window.location.pathname === '/wishlist') {
+                loadWishlist();
+            }
+        } else {
+            console.error("Wishlist error response:", data);  // Debug log
+            alert(data.detail || "Failed to add to wishlist");
+        }
+    } catch (error) {
+        console.error("Error adding to wishlist:", error);
+        alert("Failed to add to wishlist. Please try again.");
+    }
+}
+
+// Remove from Wishlist
+async function removeFromWishlist(productId) {
+    if (!currentUserEmail) {
+        currentUserEmail = localStorage.getItem('userEmail');  // Try to get email from localStorage
+        if (!currentUserEmail) {
+            alert("Please log in to manage your wishlist");
+            window.location.href = "/login";
+            return;
+        }
+    }
+
+    try {
+        console.log("Removing from wishlist:", { email: currentUserEmail, productId });  // Debug log
+        const response = await fetch(`${apiUrl}/wishlist/${currentUserEmail}/${productId}`, {
+            method: "DELETE"
+        });
+
+        if (response.ok) {
+            alert("Removed from wishlist!");
+            loadWishlist();  // Reload the wishlist
+        } else {
+            const data = await response.json();
+            console.error("Remove wishlist error:", data);  // Debug log
+            alert(data.detail || "Failed to remove from wishlist");
+        }
+    } catch (error) {
+        console.error("Error removing from wishlist:", error);
+        alert("Failed to remove from wishlist. Please try again.");
     }
 }
 
@@ -106,32 +374,102 @@ function loadProductById(id) {
 }
 
 function renderProductDetail(container, product) {
+    const imagePath = product.picture_url ? `/static/assets/products/${product.picture_url}` : '/static/assets/default-product.jpg';
+    
+    // Create variations table HTML if variations exist
+    let variationsHTML = '';
+    if (product.variations && product.variations.length > 0) {
+        variationsHTML = `
+            <div class="variations-section">
+                <h3>Available Options</h3>
+                <table class="variations-table">
+                    <thead>
+                        <tr>
+                            <th>Size</th>
+                            <th>Color</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${product.variations.map(v => `
+                            <tr>
+                                <td>${v.size}</td>
+                                <td>
+                                    <div class="color-swatch" style="background-color: ${v.color}"></div>
+                                    ${v.color}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
     container.innerHTML = `
-        <img src="../assets/${product.picture_url}" alt="${product.name}">
-        <div class="product-info">
-            <h2>${product.name}</h2>
-            <p><strong>Description:</strong> ${product.description}</p>
-            <p><strong>Category:</strong> ${product.category_name}</p>
-            <button class="wishlist-btn" onclick="saveToWishlist(${product.product_id})">Save to Wish List</button>
+        <div class="product-detail-container">
+            <div class="product-image-section">
+                <img src="${imagePath}" alt="${product.name}" class="product-main-image">
+            </div>
+            <div class="product-info-section">
+                <h1 class="product-title">${product.name}</h1>
+                <div class="product-category">
+                    <span class="category-label">Category:</span>
+                    <span class="category-value">${product.category_name}</span>
+                </div>
+                <div class="product-description">
+                    <h3>Description</h3>
+                    <p>${product.description}</p>
+                </div>
+                ${variationsHTML}
+                <div class="product-actions">
+                    <button class="wishlist-btn primary-btn" onclick="saveToWishlist(${product.product_id})">
+                        <i class="fas fa-heart"></i> Add to Wishlist
+                    </button>
+                </div>
+            </div>
         </div>
     `;
 }
 
-// Render Product Cards
+// Render Product Cards with variations data
 function renderProducts(container, products) {
     container.innerHTML = "";
     products.forEach(product => {
+        const imagePath = product.picture_url ? `/static/assets/products/${product.picture_url}` : '/static/assets/default-product.jpg';
         container.innerHTML += `
-        <div class="product-card" data-category-name="${product.category_name}">
-            <div class="clickable-area" onclick="window.location.href='product.html?id=${product.product_id}'">
-                <img src="../assets/${product.picture_url}" alt="${product.name}">
+        <div class="product-card" 
+             data-category="${product.category_name}"
+             data-variations='${JSON.stringify(product.variations || [])}'>
+            <div class="clickable-area" onclick="window.location.href='/product?id=${product.product_id}'">
+                <img src="${imagePath}" alt="${product.name}" style="max-width: 100%; height: auto;">
                 <h4>${product.name}</h4>
                 <p>${product.description}</p>
+                <p class="product-category">Category: ${product.category_name}</p>
+                <div class="variations-summary">
+                    ${renderVariationsSummary(product.variations)}
+                </div>
             </div>
-            <button class="wishlist-btn" onclick="event.stopPropagation(); saveToWishlist(${product.product_id})">Save to Wish List</button>
+            <button class="wishlist-btn" onclick="event.stopPropagation(); saveToWishlist(${product.product_id})">
+                <i class="fas fa-heart"></i> Save to Wish List
+            </button>
         </div>
         `;
     });
+}
+
+// Helper function to render variations summary
+function renderVariationsSummary(variations) {
+    if (!variations || variations.length === 0) return '';
+    
+    const sizes = [...new Set(variations.map(v => v.size))];
+    const colors = [...new Set(variations.map(v => v.color))];
+    
+    return `
+        <div class="variations-info">
+            <p>Available Sizes: ${sizes.join(', ')}</p>
+            <p>Available Colors: ${colors.join(', ')}</p>
+        </div>
+    `;
 }
 
 // Filter Products by Category
@@ -158,14 +496,9 @@ function handleSearchKey(event) {
     if (event.key === "Enter") {
         const query = document.getElementById("searchInput").value.trim();
         if (query !== "") {
-            window.location.href = `index.html?search=${encodeURIComponent(query)}`;
+            window.location.href = `/index?search=${encodeURIComponent(query)}`;
         }
     }
-}
-
-// Wishlist Button (to be connected later)
-async function saveToWishlist(productId) {
-    alert(`Product ${productId} added to wishlist!`);
 }
 
 // Demo Product Data
@@ -193,6 +526,134 @@ function getDemoProducts() {
             category_name: "Hiking"
         }
     ];
+}
+
+async function createProduct(event) {
+    event.preventDefault();
+    
+    // Get form elements
+    const nameInput = document.getElementById('productName');
+    const descriptionInput = document.getElementById('productDescription');
+    const categoryInput = document.getElementById('productCategory');
+    const imageInput = document.getElementById('productImage');
+
+    // Validate inputs
+    if (!nameInput.value.trim()) {
+        alert('Please enter a product name');
+        return;
+    }
+    if (!descriptionInput.value.trim()) {
+        alert('Please enter a product description');
+        return;
+    }
+    if (!categoryInput.value) {
+        alert('Please select a category');
+        return;
+    }
+    if (!imageInput.files[0]) {
+        alert('Please select an image');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', nameInput.value.trim());
+    formData.append('description', descriptionInput.value.trim());
+    formData.append('category_id', parseInt(categoryInput.value));
+    formData.append('picture', imageInput.files[0]);
+
+    try {
+        const response = await fetch(`${apiUrl}/products/`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert('Product created successfully!');
+            window.location.href = '/index';
+        } else {
+            alert(data.detail || 'Failed to create product');
+            console.error('Error response:', data);
+        }
+    } catch (error) {
+        console.error('Error creating product:', error);
+        alert('Failed to create product. Please try again.');
+    }
+}
+
+// Update Account
+async function updateAccount() {
+    if (!currentUserEmail) {
+        currentUserEmail = localStorage.getItem('userEmail');
+        if (!currentUserEmail) {
+            alert("Please log in to update your account");
+            window.location.href = "/login";
+            return;
+        }
+    }
+
+    const firstName = document.getElementById("firstName").value.trim();
+    const lastName = document.getElementById("lastName").value.trim();
+    const birthdate = document.getElementById("birthdate").value;
+    const currentPassword = document.getElementById("currentPassword").value;
+    const newPassword = document.getElementById("newPassword").value;
+
+    // Validate inputs
+    if (!firstName || !lastName || !birthdate || !currentPassword) {
+        alert("Please fill in all required fields");
+        return;
+    }
+
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(birthdate)) {
+        alert("Please enter a valid date in YYYY-MM-DD format");
+        return;
+    }
+
+    try {
+        console.log("Attempting to update account:", { 
+            email: currentUserEmail,
+            firstName,
+            lastName,
+            birthdate
+        });  // Debug log
+
+        const response = await fetch(`${apiUrl}/update_account/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: currentUserEmail,  // Send email directly
+                first_name: firstName,
+                last_name: lastName,
+                birthdate: birthdate,
+                current_password: currentPassword,
+                new_password: newPassword || undefined  // Only include if not empty
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            console.log("Account updated successfully:", data);  // Debug log
+            alert("Account updated successfully!");
+            
+            // Clear sensitive fields
+            document.getElementById("currentPassword").value = "";
+            document.getElementById("newPassword").value = "";
+            
+            // Update displayed information
+            if (document.getElementById("userName")) {
+                document.getElementById("userName").textContent = `${data.first_name} ${data.last_name}`;
+            }
+        } else {
+            console.error("Account update error:", data);  // Debug log
+            alert(data.detail || "Failed to update account");
+        }
+    } catch (error) {
+        console.error("Error updating account:", error);
+        alert("Failed to update account. Please try again.");
+    }
 }
 
 console.log("✅ script.js is running!");

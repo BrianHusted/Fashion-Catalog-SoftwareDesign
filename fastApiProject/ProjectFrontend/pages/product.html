@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FlexWear | Product</title>
-  <link rel="stylesheet" href="../css/styles.css" />
+  <title>Product Details - Fashion Catalog</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     body {
       background-color: #f7f7f7;
@@ -67,7 +68,7 @@
 
     .back-link {
       display: inline-block;
-      background-color: #2a6cd4; /* Blue button */
+      background-color: #2a6cd4;
       color: white;
       padding: 10px 18px;
       border-radius: 8px;
@@ -78,25 +79,25 @@
       margin-top: 10px;
     }
 
-.back-link:hover {
-  background-color: #1b4da8;
-}
+    .back-link:hover {
+      background-color: #1b4da8;
+    }
   </style>
 </head>
 <body>
 
   <!-- Navbar -->
   <div class="navbar">
-    <h2><a href="home.html" class="brand-logo">FLEXWEAR</a></h2>
+    <h2><a href="/home" class="brand-logo">FLEXWEAR</a></h2>
     <input type="text" id="searchInput" placeholder="Search Catalog" onkeypress="handleSearchKey(event)">
     <div class="nav-links">
-      <a href="wishlist.html">Wishlist</a>
-      <a href="account.html">Account</a>
+      <a href="/wishlist">Wishlist</a>
+      <a href="/account">Account</a>
     </div>
   </div>
 
   <div class="top-nav-back">
-    <a href="index.html" class="back-link">← Back to Catalog</a>
+    <a href="/index" class="back-link">← Back to Catalog</a>
   </div>
 
   <!-- Product Detail Section -->
@@ -104,7 +105,7 @@
     <!-- Populated dynamically -->
   </div>
 
-  <script src="../js/script.js"></script>
+  <script src="/static/js/script.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const urlParams = new URLSearchParams(window.location.search);

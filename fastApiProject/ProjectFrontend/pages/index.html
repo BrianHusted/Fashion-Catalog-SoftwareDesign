@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlexWear</title>
     <link rel="stylesheet" href="/static/css/styles.css">  <!-- Ensure this path is correct -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
@@ -20,22 +21,91 @@
     </div>
 </div>
 
-<!-- Filter Section -->
-<div class="filter-container">
-    <button onclick="filterByCategory('FlexWear')">Filter FlexWear</button>
-    <button onclick="filterByCategory('Running')">Running</button>
-    <button onclick="filterByCategory('Hiking')">Hiking</button>
-    <button onclick="filterByCategory('Weightlifting')">Weightlifting</button>
-    <button onclick="filterByCategory('all')">Show All</button> <!-- Reset Filter -->
-</div>
+<div class="products-with-filters">
+    <!-- Filters Sidebar -->
+    <aside class="filters-container">
+        <h2 class="filters-title">Filters</h2>
+        
+        <!-- Category Filter -->
+        <div class="filter-group">
+            <h3 class="filter-group-title">Categories</h3>
+            <div id="categoryFilters" class="filter-options">
+                <!-- Categories will be loaded dynamically -->
+            </div>
+        </div>
 
-<!-- Product Grid -->
-<div class="product-container" id="productContainer">
-    <!-- Products will be dynamically inserted here -->
+        <!-- Size Filter -->
+        <div class="filter-group">
+            <h3 class="filter-group-title">Sizes</h3>
+            <div class="filter-options">
+                <input type="checkbox" id="sizeS" class="filter-checkbox" data-size="S">
+                <label for="sizeS" class="filter-label">S</label>
+                
+                <input type="checkbox" id="sizeM" class="filter-checkbox" data-size="M">
+                <label for="sizeM" class="filter-label">M</label>
+                
+                <input type="checkbox" id="sizeL" class="filter-checkbox" data-size="L">
+                <label for="sizeL" class="filter-label">L</label>
+                
+                <input type="checkbox" id="sizeXL" class="filter-checkbox" data-size="XL">
+                <label for="sizeXL" class="filter-label">XL</label>
+            </div>
+        </div>
+
+        <!-- Color Filter -->
+        <div class="filter-group">
+            <h3 class="filter-group-title">Colors</h3>
+            <div class="filter-options">
+                <div class="color-filter">
+                    <input type="checkbox" id="colorBlack" class="filter-checkbox" data-color="Black">
+                    <label for="colorBlack" class="filter-label">
+                        <span class="color-swatch" style="background-color: black;"></span>
+                        Black
+                    </label>
+                </div>
+                
+                <div class="color-filter">
+                    <input type="checkbox" id="colorWhite" class="filter-checkbox" data-color="White">
+                    <label for="colorWhite" class="filter-label">
+                        <span class="color-swatch" style="background-color: white;"></span>
+                        White
+                    </label>
+                </div>
+                
+                <div class="color-filter">
+                    <input type="checkbox" id="colorNavy" class="filter-checkbox" data-color="Navy">
+                    <label for="colorNavy" class="filter-label">
+                        <span class="color-swatch" style="background-color: navy;"></span>
+                        Navy
+                    </label>
+                </div>
+                
+                <div class="color-filter">
+                    <input type="checkbox" id="colorGrey" class="filter-checkbox" data-color="Grey">
+                    <label for="colorGrey" class="filter-label">
+                        <span class="color-swatch" style="background-color: grey;"></span>
+                        Grey
+                    </label>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Product Grid -->
+    <div class="product-container" id="productContainer">
+        <!-- Products will be dynamically inserted here -->
+    </div>
 </div>
 
 <!-- Link JavaScript file at the bottom -->
 <script src="/static/js/script.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        loadCategories();
+        loadProducts({ containerId: "productContainer" });
+        setupFilterListeners();
+    });
+</script>
 
 </body>
 </html>
