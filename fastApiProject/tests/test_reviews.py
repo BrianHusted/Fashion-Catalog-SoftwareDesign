@@ -55,3 +55,45 @@ def test_login_form_submission():
     json_data = response.json()
     assert json_data["message"] == "Login successful!"
     assert json_data["email"] == "test@test.com"
+
+
+def test_get_index_page():
+    """Test that the login page loads correctly."""
+    response = client.get("/index")
+    assert response.status_code == 200
+    # Check that the login page contains expected content, like a form or title
+    assert """<div class="navbar">
+    <h2><a href="/index" class="brand-logo">FLEXWEAR</a></h2>
+    <input type="text" id="searchInput" placeholder="Search Catalog" onkeyup="searchProducts()">
+    <div>
+        <div class="nav-links">
+            <a href="/wishlist">Wishlist</a>
+            <a href="/account">Account</a>
+        </div>
+    </div>
+</div>""" in response.text
+
+
+def test_get_wishlist_page():
+    """Test that the login page loads correctly."""
+    response = client.get("/index")
+    assert response.status_code == 200
+    # Check that the login page contains expected content, like a form or title
+    assert """<div class="navbar">
+    <h2><a href="/index" class="brand-logo">FLEXWEAR</a></h2>
+    <input type="text" id="searchInput" placeholder="Search Catalog" onkeyup="searchProducts()">
+    <div>
+        <div class="nav-links">
+            <a href="/wishlist">Wishlist</a>
+            <a href="/account">Account</a>
+        </div>
+    </div>
+</div>""" in response.text
+
+def test_get_products():
+    """Test that the login page loads correctly."""
+    response = client.get("/products/")
+    assert response.status_code == 200
+    # Check that the login page contains expected content, like a form or title
+    json_data = response.json()
+    assert json_data[0]["name"] is not None
