@@ -68,7 +68,7 @@ Visit the API docs at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ### 4. Run the Admin GUI
 ```bash
-python Admin_Main.py
+python3 Admin_Main.py
 ```
 
 ---
@@ -89,7 +89,3 @@ python Admin_Main.py
 - Make sure PostgreSQL is running locally
 
 ---
-
-## 📄 License
-
-For academic use only.
