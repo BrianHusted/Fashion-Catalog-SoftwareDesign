@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from pydantic import BaseModel
@@ -58,15 +58,17 @@ class Wishlist(Base):
     added_at = Column(DateTime, default=datetime.utcnow)
     product = relationship("Product")
 
-# class Review(Base):
-#     __tablename__ = "reviews"
-#     id = Column(Integer, primary_key=True, index=True)
-#     user_email = Column(String, ForeignKey("users.email"))  # Fix foreign key reference
-#     product_id = Column(Integer, ForeignKey("products.id"))
-#     rating = Column(Float)
-#     comment = Column(String)
-#     timestamp = Column(DateTime, default=datetime.utcnow)
-#     product = relationship("Product")
+class Review(Base):
+    __tablename__ = "reviews"
+    review_id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, ForeignKey("users.email", ondelete="CASCADE"))
+    product_id = Column(Integer, ForeignKey("products.product_id", ondelete="CASCADE"))
+    rating = Column(Integer)
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User")
+    product = relationship("Product")
 
 class Admin(Base):
     __tablename__ = "admins"
@@ -102,3 +104,22 @@ class ProductResponse(BaseModel):
 #     action = Column(String)
 #     timestamp = Column(DateTime, default=datetime.utcnow)
 #     product = relationship("Product")
+
+class ReviewCreate(BaseModel):
+    email: str
+    product_id: int
+    rating: int
+    comment: Optional[str] = None
+
+class ReviewResponse(BaseModel):
+    review_id: int
+    email: str
+    product_id: int
+    rating: int
+    comment: Optional[str]
+    created_at: datetime
+    first_name: str
+    last_name: str
+
+    class Config:
+        orm_mode = True

@@ -4,7 +4,7 @@ import uvicorn
 import os
 from db_classes import *
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func, case
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +13,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 from passlib.context import CryptContext
-from typing import Optional
+from typing import Optional, List
 
 app = FastAPI()
 
@@ -506,6 +506,97 @@ def add_sample_variations(product_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/reviews", response_model=ReviewResponse)
+def create_review(review: ReviewCreate, db: Session = Depends(get_db)):
+    """Create a new review for a product."""
+    # Check if user exists
+    user = db.query(User).filter(User.email == review.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if product exists
+    product = db.query(Product).filter(Product.product_id == review.product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Create new review
+    new_review = Review(
+        email=review.email,
+        product_id=review.product_id,
+        rating=review.rating,
+        comment=review.comment
+    )
+    
+    db.add(new_review)
+    db.commit()
+    db.refresh(new_review)
+
+    # Get user's name for response
+    return {
+        "review_id": new_review.review_id,
+        "email": new_review.email,
+        "product_id": new_review.product_id,
+        "rating": new_review.rating,
+        "comment": new_review.comment,
+        "created_at": new_review.created_at,
+        "first_name": user.first_name,
+        "last_name": user.last_name
+    }
+
+@app.get("/api/reviews/{product_id}", response_model=List[ReviewResponse])
+def get_product_reviews(product_id: int, db: Session = Depends(get_db)):
+    """Get all reviews for a specific product."""
+    # Check if product exists
+    product = db.query(Product).filter(Product.product_id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Get reviews with user information
+    reviews = db.query(Review, User).join(User).filter(Review.product_id == product_id).order_by(Review.created_at.desc()).all()
+    
+    return [
+        {
+            "review_id": review.Review.review_id,
+            "email": review.Review.email,
+            "product_id": review.Review.product_id,
+            "rating": review.Review.rating,
+            "comment": review.Review.comment,
+            "created_at": review.Review.created_at,
+            "first_name": review.User.first_name,
+            "last_name": review.User.last_name
+        }
+        for review in reviews
+    ]
+
+@app.get("/api/reviews/stats/{product_id}")
+def get_product_review_stats(product_id: int, db: Session = Depends(get_db)):
+    """Get review statistics for a specific product."""
+    # Check if product exists
+    product = db.query(Product).filter(Product.product_id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Get review statistics
+    stats = db.query(
+        func.count(Review.review_id).label('total_reviews'),
+        func.avg(Review.rating).label('average_rating'),
+        func.count(case((Review.rating == 5, 1))).label('five_star'),
+        func.count(case((Review.rating == 4, 1))).label('four_star'),
+        func.count(case((Review.rating == 3, 1))).label('three_star'),
+        func.count(case((Review.rating == 2, 1))).label('two_star'),
+        func.count(case((Review.rating == 1, 1))).label('one_star')
+    ).filter(Review.product_id == product_id).first()
+
+    return {
+        "total_reviews": stats.total_reviews or 0,
+        "average_rating": float(stats.average_rating) if stats.average_rating else 0,
+        "five_star": stats.five_star or 0,
+        "four_star": stats.four_star or 0,
+        "three_star": stats.three_star or 0,
+        "two_star": stats.two_star or 0,
+        "one_star": stats.one_star or 0
+    }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

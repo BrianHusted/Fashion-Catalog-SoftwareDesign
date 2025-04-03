@@ -82,6 +82,124 @@
     .back-link:hover {
       background-color: #1b4da8;
     }
+
+    /* Reviews Section Styles */
+    .reviews-section {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 40px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .reviews-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .reviews-stats {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .rating-stars {
+      color: #ffd700;
+    }
+
+    .review-form {
+      margin-bottom: 40px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .review-form h3 {
+      margin-bottom: 15px;
+    }
+
+    .rating-input {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .rating-input i {
+      font-size: 24px;
+      cursor: pointer;
+      color: #ddd;
+      transition: color 0.2s ease;
+    }
+
+    .rating-input i:hover,
+    .rating-input i.active {
+      color: #ffd700;
+    }
+
+    .review-form textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      resize: vertical;
+    }
+
+    .submit-review-btn {
+      padding: 10px 20px;
+      background-color: #2a6cd4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .submit-review-btn:hover {
+      background-color: #1b4da8;
+    }
+
+    .reviews-list {
+      margin-top: 30px;
+    }
+
+    .review-item {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .review-item:last-child {
+      border-bottom: none;
+    }
+
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .review-author {
+      font-weight: 500;
+    }
+
+    .review-date {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .review-rating {
+      color: #ffd700;
+      margin-bottom: 10px;
+    }
+
+    .review-comment {
+      color: #333;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -105,23 +223,172 @@
     <!-- Populated dynamically -->
   </div>
 
+  <!-- Reviews Section -->
+  <div class="reviews-section">
+    <div class="reviews-header">
+      <h2>Customer Reviews</h2>
+      <div class="reviews-stats" id="reviewsStats">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Review Form -->
+    <div class="review-form" id="reviewForm">
+      <h3>Write a Review</h3>
+      <div class="rating-input">
+        <i class="fas fa-star" data-rating="1"></i>
+        <i class="fas fa-star" data-rating="2"></i>
+        <i class="fas fa-star" data-rating="3"></i>
+        <i class="fas fa-star" data-rating="4"></i>
+        <i class="fas fa-star" data-rating="5"></i>
+      </div>
+      <textarea id="reviewComment" placeholder="Share your thoughts about this product..."></textarea>
+      <button class="submit-review-btn" onclick="submitReview()">Submit Review</button>
+    </div>
+
+    <!-- Reviews List -->
+    <div class="reviews-list" id="reviewsList">
+      <!-- Populated dynamically -->
+    </div>
+  </div>
+
   <script src="/static/js/script.js"></script>
   <script>
+    let currentProductId = null;
+    let selectedRating = 0;
+
     document.addEventListener("DOMContentLoaded", () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const productId = parseInt(urlParams.get("id"));
-      if (!productId) return;
+      currentProductId = parseInt(urlParams.get("id"));
+      if (!currentProductId) return;
 
-      loadProductById(productId);
+      loadProductById(currentProductId);
+      loadReviews(currentProductId);
+      loadReviewStats(currentProductId);
+
+      // Setup rating input handlers
+      const ratingStars = document.querySelectorAll('.rating-input i');
+      ratingStars.forEach(star => {
+        star.addEventListener('mouseover', () => {
+          const rating = parseInt(star.dataset.rating);
+          updateRatingStars(rating);
+        });
+
+        star.addEventListener('click', () => {
+          selectedRating = parseInt(star.dataset.rating);
+          updateRatingStars(selectedRating);
+        });
+      });
+
+      document.querySelector('.rating-input').addEventListener('mouseout', () => {
+        updateRatingStars(selectedRating);
+      });
     });
-  </script>
-  <script>
+
     function handleSearchKey(event) {
       if (event.key === "Enter") {
         const query = document.getElementById("searchInput").value.trim();
         if (query) {
           window.location.href = `index.html?search=${encodeURIComponent(query)}`;
         }
+      }
+    }
+
+    function updateRatingStars(rating) {
+      const stars = document.querySelectorAll('.rating-input i');
+      stars.forEach(star => {
+        const starRating = parseInt(star.dataset.rating);
+        star.classList.toggle('active', starRating <= rating);
+      });
+    }
+
+    async function loadReviews(productId) {
+      try {
+        const response = await fetch(`/api/reviews/${productId}`);
+        const reviews = await response.json();
+        
+        const reviewsList = document.getElementById('reviewsList');
+        reviewsList.innerHTML = reviews.map(review => `
+          <div class="review-item">
+            <div class="review-header">
+              <span class="review-author">${review.first_name} ${review.last_name}</span>
+              <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
+            </div>
+            <div class="review-rating">
+              ${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}
+            </div>
+            <div class="review-comment">${review.comment || 'No comment provided.'}</div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading reviews:', error);
+      }
+    }
+
+    async function loadReviewStats(productId) {
+      try {
+        const response = await fetch(`/api/reviews/stats/${productId}`);
+        const stats = await response.json();
+        
+        const reviewsStats = document.getElementById('reviewsStats');
+        reviewsStats.innerHTML = `
+          <div>
+            <div class="rating-stars">
+              ${'★'.repeat(Math.round(stats.average_rating || 0))}${'☆'.repeat(5-Math.round(stats.average_rating || 0))}
+            </div>
+            <div>${stats.total_reviews} reviews</div>
+          </div>
+        `;
+      } catch (error) {
+        console.error('Error loading review stats:', error);
+      }
+    }
+
+    async function submitReview() {
+      if (!selectedRating) {
+        alert('Please select a rating');
+        return;
+      }
+
+      const comment = document.getElementById('reviewComment').value.trim();
+      const userEmail = localStorage.getItem('userEmail'); // Assuming you store user email in localStorage after login
+
+      if (!userEmail) {
+        alert('Please log in to submit a review');
+        window.location.href = '/login';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/reviews', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: userEmail,
+            product_id: currentProductId,
+            rating: selectedRating,
+            comment: comment
+          })
+        });
+
+        if (response.ok) {
+          // Reset form
+          selectedRating = 0;
+          updateRatingStars(0);
+          document.getElementById('reviewComment').value = '';
+          
+          // Reload reviews and stats
+          loadReviews(currentProductId);
+          loadReviewStats(currentProductId);
+        } else {
+          const error = await response.json();
+          alert(error.detail || 'Failed to submit review');
+        }
+      } catch (error) {
+        console.error('Error submitting review:', error);
+        alert('Failed to submit review');
       }
     }
   </script>
