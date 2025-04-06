@@ -2,192 +2,127 @@
 
 echo "🚀 Starting FlexWear Setup..."
 
-# Detect OS
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    OS_TYPE="macos"
-elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || [[ "$OS" == "Windows_NT" ]]; then
-    OS_TYPE="windows"
-else
-    echo "❌ Unsupported operating system"
+# Check for Python installation
+if ! command -v python3 &> /dev/null; then
+    echo "📥 Python not found. Please install Python 3.11 or later from https://www.python.org/downloads/macos/"
     exit 1
 fi
 
-# Function to install Python on macOS
-install_python_macos() {
-    echo "📥 Installing Python using Homebrew..."
-    if ! command -v brew &> /dev/null; then
-        echo "🍺 Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    fi
-    brew install python@3.11
-    brew install pip3
-}
-
-# Function to install Python on Windows
-install_python_windows() {
-    echo "📥 Downloading Python installer..."
-    curl -o python_installer.exe https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe
-    echo "📦 Installing Python..."
-    ./python_installer.exe /quiet InstallAllUsers=1 PrependPath=1
-    rm python_installer.exe
-}
-
-# Function to install PostgreSQL on macOS
-install_postgresql_macos() {
-    echo "📥 Installing PostgreSQL using Homebrew..."
-    brew install postgresql@14
-    echo "🎉 Starting PostgreSQL service..."
-    brew services start postgresql@14
-}
-
-# Function to install PostgreSQL on Windows
-install_postgresql_windows() {
-    echo "📥 Downloading PostgreSQL installer..."
-    curl -o postgresql_installer.exe https://get.enterprisedb.com/postgresql/postgresql-14.10-1-windows-x64.exe
-    echo "📦 Installing PostgreSQL..."
-    ./postgresql_installer.exe --unattendedmodeui minimal --mode unattended --superpassword "password" --servicename "PostgreSQL"
-    rm postgresql_installer.exe
-    
-    # Add PostgreSQL to PATH
-    echo "🔄 Adding PostgreSQL to PATH..."
-    export PATH=$PATH:"/c/Program Files/PostgreSQL/14/bin"
-    [[ ":$PATH:" != *":/c/Program Files/PostgreSQL/14/bin:"* ]] && export PATH="/c/Program Files/PostgreSQL/14/bin:$PATH"
-}
-
-# Check and install Python if needed
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Python3 is not installed. Installing now..."
-    if [[ "$OS_TYPE" == "macos" ]]; then
-        install_python_macos
-    else
-        install_python_windows
-    fi
+# Check for Homebrew installation
+if ! command -v brew &> /dev/null; then
+    echo "📥 Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+    eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-# Check and install pip if needed
-if ! command -v pip3 &> /dev/null; then
-    echo "❌ pip3 is not installed. Installing now..."
-    if [[ "$OS_TYPE" == "macos" ]]; then
-        brew install pip3
-    else
-        python3 -m ensurepip --upgrade
-    fi
+# Check for PostgreSQL installation
+if ! command -v psql &> /dev/null; then
+    echo "📥 Installing PostgreSQL..."
+    brew install postgresql@14
+    brew services start postgresql@14
+    
+    # Wait for PostgreSQL to start
+    echo "⏳ Waiting for PostgreSQL to start..."
+    for i in {1..30}; do
+        if pg_isready -q; then
+            break
+        fi
+        echo "Waiting for PostgreSQL to start... ($i/30)"
+        sleep 1
+    done
 fi
 
 # Create virtual environment
 echo "📦 Creating virtual environment..."
 python3 -m venv venv
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to create virtual environment"
+    exit 1
+fi
 
-# Activate virtual environment based on OS
-if [[ "$OS_TYPE" == "windows" ]]; then
-    source venv/Scripts/activate
-else
-    source venv/bin/activate
+# Activate virtual environment
+source venv/bin/activate
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to activate virtual environment"
+    exit 1
 fi
 
 # Install dependencies
 echo "📥 Installing dependencies..."
-pip3 install fastapi
-pip3 install uvicorn
-pip3 install sqlalchemy
-pip3 install psycopg2-binary
-pip3 install python-multipart
-pip3 install python-jose[cryptography]
-pip3 install passlib[bcrypt]
-pip3 install python-dotenv
-pip3 install aiofiles
-pip3 install jinja2
-pip3 install tk  # Adding tkinter for GUI
+pip install fastapi uvicorn sqlalchemy psycopg2-binary python-multipart python-jose[cryptography] passlib[bcrypt] python-dotenv aiofiles jinja2 tk
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to install dependencies"
+    exit 1
+fi
 
 # Create .env file if it doesn't exist
 if [ ! -f .env ]; then
     echo "🔑 Creating .env file..."
-    cat > .env << EOL
-DATABASE_URL=postgresql://postgres:password@localhost:5432/flexwear
-SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-EOL
-fi
-
-# Check and install PostgreSQL if needed
-if ! command -v psql &> /dev/null; then
-    echo "📥 PostgreSQL is not installed. Installing now..."
-    if [[ "$OS_TYPE" == "macos" ]]; then
-        install_postgresql_macos
-    else
-        install_postgresql_windows
-    fi
-fi
-
-# Wait for PostgreSQL to be ready
-echo "⏳ Waiting for PostgreSQL to be ready..."
-max_attempts=30
-attempt=1
-while ! pg_isready &> /dev/null && [ $attempt -le $max_attempts ]; do
-    echo "Attempt $attempt of $max_attempts: Waiting for PostgreSQL to start..."
-    sleep 1
-    attempt=$((attempt + 1))
-done
-
-if ! pg_isready &> /dev/null; then
-    echo "❌ PostgreSQL failed to start. Please check your installation."
-    exit 1
+    echo "DATABASE_URL=postgresql://postgres@localhost:5432/flexwear" > .env
+    echo "SECRET_KEY=your-secret-key-here" >> .env
+    echo "ALGORITHM=HS256" >> .env
+    echo "ACCESS_TOKEN_EXPIRE_MINUTES=30" >> .env
 fi
 
 # Database setup
 echo "🗄️ Setting up database..."
-
-# Create database if it doesn't exist
-if [[ "$OS_TYPE" == "windows" ]]; then
-    # For Windows, use the full path to psql
-    PSQL="/c/Program Files/PostgreSQL/14/bin/psql.exe"
-    "$PSQL" -U postgres -c "SELECT 1 FROM pg_database WHERE datname = 'flexwear'" | grep -q 1 || "$PSQL" -U postgres -c "CREATE DATABASE flexwear"
-    "$PSQL" -U postgres -d flexwear -f database_dump.sql
-else
-    # For macOS
-    psql -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'flexwear'" | grep -q 1 || psql -U postgres -c "CREATE DATABASE flexwear"
-    psql -U postgres -d flexwear -f database_dump.sql
+psql -U postgres -c "CREATE DATABASE flexwear;" 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "ℹ️ Database might already exist, continuing..."
 fi
 
-# Start the application
+# Import database dump if it exists
+if [ -f database_dump.sql ]; then
+    echo "📥 Importing database dump..."
+    psql -U postgres -d flexwear -f database_dump.sql
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to import database dump"
+        exit 1
+    fi
+else
+    echo "ℹ️ No database dump found. Skipping import."
+fi
+
+# Start the applications
 echo "🚀 Starting the applications..."
 
-# Change to the fastApiProject directory
-cd fastApiProject || {
-    echo "❌ Failed to find fastApiProject directory"
+# Check if fastApiProject directory exists
+if [ ! -d "fastApiProject" ]; then
+    echo "❌ fastApiProject directory not found"
     exit 1
-}
-
-# Start the applications based on OS
-if [[ "$OS_TYPE" == "windows" ]]; then
-    # Windows: Start using pythonw for GUI
-    echo "👤 Starting Admin GUI..."
-    pythonw Admin_Main.py &
-    ADMIN_PID=$!
-    
-    echo "🌐 Starting main web application..."
-    python script.py &
-    SCRIPT_PID=$!
-else
-    # macOS
-    echo "👤 Starting Admin GUI..."
-    python3 Admin_Main.py &
-    ADMIN_PID=$!
-    
-    echo "🌐 Starting main web application..."
-    python3 script.py &
-    SCRIPT_PID=$!
 fi
 
-# Wait for both processes
-wait $ADMIN_PID $SCRIPT_PID
+# Change to the fastApiProject directory
+cd fastApiProject
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to change to fastApiProject directory"
+    exit 1
+fi
+
+# Start Admin GUI
+echo "👤 Starting Admin GUI..."
+if [ -f "Admin_Main.py" ]; then
+    python3 Admin_Main.py &
+else
+    echo "❌ Admin_Main.py not found"
+    exit 1
+fi
+
+# Start web application
+echo "🌐 Starting main web application..."
+if [ -f "script.py" ]; then
+    python3 script.py &
+else
+    echo "❌ script.py not found"
+    exit 1
+fi
 
 echo "✅ Setup complete!"
 echo "📝 Note: You can access the web application at: http://localhost:8000"
 echo "The Admin GUI should now be open in a separate window."
 echo ""
-echo "To stop all applications, press Ctrl+C"
+echo "To stop the applications, press Ctrl+C"
 
-# Trap Ctrl+C and cleanup
-trap 'kill $ADMIN_PID $SCRIPT_PID; exit' INT 
+# Keep the script running
+wait 

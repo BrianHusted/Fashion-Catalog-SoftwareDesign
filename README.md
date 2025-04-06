@@ -12,7 +12,7 @@ This project is a full-stack application developed for managing and exploring fa
 - **ORM**: SQLAlchemy
 - **Password Handling**: Passlib
 - **Testing**: HTTP requests via `.http` files
-- **Script Tools**: Bash
+- **Script Tools**: Bash (macOS) / Batch (Windows)
 
 ---
 
@@ -30,12 +30,12 @@ Fashion-Catalog-SoftwareDesign/
 │   ├── test_main.http         # HTTP test routes
 │   └── run.sh                 # Run server and open browser
 │
-├── README.md (this file)
+├── setup.bat                  # Windows setup script
+├── setup.sh                   # macOS setup script
+└── README.md (this file)
 ```
 
 ---
-
-
 
 ## 🧠 Key Features
 
@@ -47,162 +47,184 @@ Fashion-Catalog-SoftwareDesign/
 
 ---
 
-## 📌 Notes
+## 🚀 Quick Start
+
+### For Windows Users:
+
+1. **Prerequisites**
+   - Install [Python 3.11 or later](https://www.python.org/downloads/windows/)
+     - During installation, check "Add Python to PATH"
+   - Install [PostgreSQL](https://www.postgresql.org/download/windows/)
+     - Use port: 5432
+     - Set password to: postgres
+     - Keep default superuser: postgres
+     - Add to PATH: `C:\Program Files\PostgreSQL\14\bin`
+
+2. **Setup**
+   - Double-click `setup.bat`
+   - Follow the on-screen instructions
+   - **Note**: Admin credentials will be displayed in the terminal when the application starts
+
+### For macOS Users:
+
+1. **Prerequisites**
+   - Install [Python 3.11 or later](https://www.python.org/downloads/macos/)
+   - Install [Homebrew](https://brew.sh/) (if not already installed)
+   - PostgreSQL will be installed automatically by the setup script
+
+2. **Setup**
+   - Open Terminal
+   - Navigate to project directory:
+     ```bash
+     cd path/to/Fashion-Catalog-SoftwareDesign
+     ```
+   - Make setup script executable:
+     ```bash
+     chmod +x setup.sh
+     ```
+   - Run setup script:
+     ```bash
+     ./setup.sh
+     ```
+   - **Note**: Admin credentials will be displayed in the terminal when the application starts
+
+## 📌 Accessing the Application
+
+After successful setup:
+- Web Application: http://localhost:8000
+- Admin GUI: Opens automatically in a separate window
+- **Important**: Check the terminal for admin login credentials
+
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+1. **PostgreSQL Connection Issues**
+   - Windows:
+     - Verify PostgreSQL is running
+     - Check port 5432 is not in use
+     - Confirm password is "postgres"
+   - macOS:
+     - Run `brew services start postgresql@14`
+     - Check status with `brew services list`
+
+2. **Python/Pip Issues**
+   - Verify Python installation:
+     ```bash
+     python --version  # Windows
+     python3 --version # macOS
+     ```
+   - Check PATH settings
+
+3. **Application Not Starting**
+   - Check if all dependencies are installed
+   - Verify database connection in .env file
+   - Ensure port 8000 is available
+   - Make sure to check the terminal for any error messages
+
+4. **Admin GUI Not Opening**
+   - Check the terminal for any error messages
+   - Verify that the admin credentials are displayed
+   - Make sure tkinter is properly installed
+
+## ⏹️ Stopping the Applications
+
+- Windows: Close Command Prompt or press Ctrl+C
+- macOS: Press Ctrl+C in Terminal
+
+## 📝 Notes
 
 - No deployment tools used; intended for local use
 - Make sure PostgreSQL is running locally
+- For macOS users, Homebrew is required for PostgreSQL installation
+- Admin credentials are automatically generated and displayed in the terminal
+- Keep the terminal window open to see the admin credentials and any error messages
+
+## 🤝 Support
+
+If you need additional help, please contact the development team.
+
+## 📜 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
 # FlexWear Fashion Catalog
 
-A modern fashion catalog web application with admin interface and user management.
+A modern fashion catalog management system with admin interface and web application.
 
-## Quick Start Guide
+## Prerequisites
 
-### For Windows Users:
+Before running the setup script, please ensure you have the following installed:
 
-1. Download or clone this repository
-2. Open Command Prompt as Administrator
-3. Navigate to the project directory:
-```cmd
-cd path\to\Fashion-Catalog-SoftwareDesign
-```
-4. Run the setup script:
-```cmd
-setup.bat
-```
+1. **Python 3.11 or later**
+   - Download from: [Python Official Website](https://www.python.org/downloads/)
+   - During installation, make sure to check "Add Python to PATH"
 
-The script will automatically:
-- Install Python if not present
-- Install PostgreSQL if not present
-- Set up the virtual environment
-- Install all dependencies
-- Create and populate the database
-- Start both the web application and admin GUI
+2. **PostgreSQL**
+   - Download from: [PostgreSQL Official Website](https://www.postgresql.org/download/windows/)
+   - During installation:
+     - Use port: 5432
+     - Set password to: postgres
+     - Keep the default superuser: postgres
+   - After installation:
+     - Add PostgreSQL to your system PATH:
+       - Add this to your PATH: `C:\Program Files\PostgreSQL\14\bin`
+       - (Replace 14 with your PostgreSQL version number)
+     - To add to PATH:
+       1. Open System Properties (Win + Pause/Break)
+       2. Click "Advanced system settings"
+       3. Click "Environment Variables"
+       4. Under "System variables", find and select "Path"
+       5. Click "Edit"
+       6. Click "New"
+       7. Add the PostgreSQL bin path
+       8. Click "OK" on all windows
 
-### For macOS Users:
+## Setup Instructions
 
-1. Download or clone this repository
-2. Open Terminal
-3. Navigate to the project directory:
-```bash
-cd path/to/Fashion-Catalog-SoftwareDesign
-```
-4. Make the setup script executable:
-```bash
-chmod +x setup.sh
-```
-5. Run the setup script:
-```bash
-./setup.sh
-```
+1. **Download the Project**
+   - Download and extract the project files to your desired location
 
-The script will automatically:
-- Install Homebrew if not present
-- Install Python if not present
-- Install PostgreSQL if not present
-- Set up the virtual environment
-- Install all dependencies
-- Create and populate the database
-- Start both the web application and admin GUI
+2. **Run the Setup Script**
+   - Double-click `setup.bat` to start the setup process
+   - The script will:
+     - Create a Python virtual environment
+     - Install all required dependencies
+     - Set up the database
+     - Start the applications
 
-## What Gets Installed
-
-The setup scripts will check for and install (if needed):
-
-- Python 3.11
-- pip (Python package manager)
-- PostgreSQL 14
-- Required Python packages:
-  - FastAPI
-  - Uvicorn
-  - SQLAlchemy
-  - psycopg2-binary
-  - And more...
-
-## Accessing the Application
-
-After setup completes successfully:
-- The web application will be available at: http://localhost:8000
-- The Admin GUI will open automatically in a separate window
-
-## Stopping the Application
-
-### On Windows:
-- Close the Command Prompt window, or
-- Press Ctrl+C in the Command Prompt
-
-### On macOS:
-- Press Ctrl+C in the Terminal window
+3. **Access the Applications**
+   - Web Application: http://localhost:8000
+   - Admin GUI: Will open automatically in a separate window
 
 ## Troubleshooting
 
-### Common Issues
-
-1. "Permission Denied" when running setup script:
-   - Windows: Run Command Prompt as Administrator
-   - macOS: Run `chmod +x setup.sh` before executing
-
-2. PostgreSQL Connection Issues:
-   - Ensure no other PostgreSQL instance is running
-   - Default password is set to "password"
-   - Check if port 5432 is available
-
-3. Python Installation Issues:
-   - Windows: Ensure you're using Command Prompt as Administrator
-   - macOS: If Homebrew installation fails, visit https://brew.sh for manual installation
-
-4. Admin GUI Not Opening:
-   - Ensure tkinter is properly installed
-   - Try running Admin_Main.py manually:
-     ```bash
-     # In fastApiProject directory
-     python Admin_Main.py
-     ```
-
-### Getting Help
-
 If you encounter any issues:
-1. Check the console output for error messages
-2. Ensure all prerequisites are properly installed
-3. Try running the setup script again
-4. Check the project's issue tracker for similar problems
 
-## Manual Setup
+1. **PostgreSQL Connection Issues**
+   - Make sure PostgreSQL is running
+   - Verify the port (5432) is not in use
+   - Check if the password is set to "postgres"
 
-If you prefer to set up manually, follow these steps:
+2. **Python/Pip Issues**
+   - Make sure Python is added to PATH
+   - Try running `python --version` in Command Prompt to verify installation
 
-1. Install Python 3.11
-2. Install PostgreSQL 14
-3. Create a virtual environment:
-```bash
-python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On macOS:
-source venv/bin/activate
-```
+3. **Application Not Starting**
+   - Check if all dependencies are installed correctly
+   - Verify the database connection in the .env file
+   - Make sure no other applications are using port 8000
 
-4. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+## Stopping the Applications
 
-5. Create and set up the database:
-```bash
-psql -U postgres -c "CREATE DATABASE flexwear"
-psql -U postgres -d flexwear -f database_dump.sql
-```
+- Close the Command Prompt window
+- Or press Ctrl+C in the Command Prompt window
 
-6. Start the applications:
-```bash
-cd fastApiProject
-# Start Admin GUI
-python Admin_Main.py
-# In a new terminal
-python script.py
-```
+## Support
+
+If you need additional help, please contact the development team.
 
 ## Contributing
 
