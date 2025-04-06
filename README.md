@@ -35,42 +35,7 @@ Fashion-Catalog-SoftwareDesign/
 
 ---
 
-## 🚀 How to Run
 
-### 1. Setup PostgreSQL
-Create a database named `flexwear` in PostgreSQL. Update connection credentials inside the Python files if necessary.
-
-```bash
-psql -U postgres
-CREATE DATABASE flexwear;
-```
-
-Then load schema and data:
-
-```bash
-\i db.sql
-\i flexwear_dump.sql
-```
-
-### 2. Install Python Dependencies
-```bash
-pip install fastapi uvicorn sqlalchemy psycopg2-binary passlib python-multipart pydantic
-```
-
-### 3. Run FastAPI Backend
-```bash
-cd fastApiProject
-uvicorn script:app --reload
-```
-Visit the Fashion Catalog at: [http://127.0.0.1:8000](http://127.0.0.1:8000)
-Visit the API docs at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-
-### 4. Run the Admin GUI
-```bash
-python3 Admin_Main.py
-```
-
----
 
 ## 🧠 Key Features
 
