@@ -20,7 +20,7 @@ if errorlevel 1 (
 :: Create virtual environment
 echo 📦 Creating virtual environment...
 python -m venv venv
-call venv\Scripts\activate.bat
+call "venv\Scripts\activate.bat"
 
 :: Install dependencies
 echo 📥 Installing dependencies...
@@ -55,7 +55,7 @@ if errorlevel 1 (
     
     :: Add PostgreSQL to PATH
     setx PATH "%PATH%;C:\Program Files\PostgreSQL\14\bin"
-    set PATH=%PATH%;C:\Program Files\PostgreSQL\14\bin
+    set "PATH=%PATH%;C:\Program Files\PostgreSQL\14\bin"
 )
 
 :: Wait for PostgreSQL to be ready
@@ -83,7 +83,7 @@ psql -U postgres -d flexwear -f database_dump.sql
 echo 🚀 Starting the applications...
 
 :: Change to the fastApiProject directory
-cd fastApiProject
+cd "fastApiProject"
 if errorlevel 1 (
     echo ❌ Failed to find fastApiProject directory
     exit /b 1
@@ -91,11 +91,11 @@ if errorlevel 1 (
 
 :: Start Admin GUI using pythonw
 echo 👤 Starting Admin GUI...
-start /b pythonw Admin_Main.py
+start /b pythonw "Admin_Main.py"
 
 :: Start web application
 echo 🌐 Starting main web application...
-start /b python script.py
+start /b python "script.py"
 
 echo ✅ Setup complete!
 echo 📝 Note: You can access the web application at: http://localhost:8000
