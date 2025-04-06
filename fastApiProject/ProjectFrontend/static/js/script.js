@@ -1,5 +1,9 @@
 const apiUrl = "http://127.0.0.1:8000";  // Change this if needed
 let currentUserEmail = null;  // Store the current user's email
+let allProducts = [];
+let currentPage = 1;
+let productsPerPage = 12;
+let isLoading = false;
 
 // Signup Function
 async function signup() {
@@ -78,9 +82,15 @@ async function loadCategories() {
                 <div class="filter-option">
                     <input type="checkbox" id="category${category.category_id}" 
                            class="filter-checkbox" data-category="${category.name}">
-                    <label for="category${category.category_id}" class="filter-label">${category.name}</label>
+                    <label for="category${category.category_id}" class="filter-label">
+                        <span class="category-name">${category.name}</span>
+                        <span class="category-count"></span>
+                    </label>
                 </div>
             `).join('');
+
+            // Add event listeners after creating the checkboxes
+            setupFilterListeners();
         }
     } catch (error) {
         console.error('Error loading categories:', error);
@@ -92,25 +102,28 @@ function setupFilterListeners() {
     const filterCheckboxes = document.querySelectorAll('.filter-checkbox');
     filterCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
-            // Determine if we're on the products page or wishlist page
-            const isProductsPage = document.getElementById('productContainer') !== null;
-            if (isProductsPage) {
-                applyProductFilters();
-            } else {
-                applyWishlistFilters();
-            }
+            applyProductFilters();
         });
     });
 }
 
 // Apply filters to products
 function applyProductFilters() {
-    const selectedCategories = Array.from(document.querySelectorAll('[data-category]:checked'))
+    console.log('Applying product filters...');
+    
+    // Get selected filters
+    const selectedCategories = Array.from(document.querySelectorAll('.filter-checkbox[data-category]:checked'))
         .map(cb => cb.dataset.category);
-    const selectedSizes = Array.from(document.querySelectorAll('[data-size]:checked'))
+    const selectedSizes = Array.from(document.querySelectorAll('.filter-checkbox[data-size]:checked'))
         .map(cb => cb.dataset.size);
-    const selectedColors = Array.from(document.querySelectorAll('[data-color]:checked'))
+    const selectedColors = Array.from(document.querySelectorAll('.filter-checkbox[data-color]:checked'))
         .map(cb => cb.dataset.color);
+
+    console.log('Selected filters:', {
+        categories: selectedCategories,
+        sizes: selectedSizes,
+        colors: selectedColors
+    });
 
     const productCards = document.querySelectorAll('.product-card');
     productCards.forEach(card => {
@@ -125,17 +138,17 @@ function applyProductFilters() {
         // Category matching
         const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(category);
 
-        // Size matching - show if any variation matches any selected size
+        // Size matching
         const matchesSize = selectedSizes.length === 0 || 
             variations.some(v => selectedSizes.includes(v.size));
 
-        // Color matching - show if any variation matches any selected color
+        // Color matching
         const matchesColor = selectedColors.length === 0 || 
             variations.some(v => selectedColors.includes(v.color));
 
-        // Show the item if it matches all active filters
+        // Show/hide the product card
         const shouldShow = matchesCategory && matchesSize && matchesColor;
-        card.style.display = shouldShow ? 'block' : 'none';
+        card.style.display = shouldShow ? 'flex' : 'none';
     });
 }
 
@@ -320,16 +333,185 @@ async function loadProducts({ containerId = "productContainer", limit = null } =
     if (!container) return;
 
     try {
+        // Add loading spinner
+        container.innerHTML = '<div class="loading-spinner" style="display: block;"></div>';
+        
         const response = await fetch(`${apiUrl}/products/`);
-        const allProducts = await response.json();
-        const products = limit ? allProducts.slice(0, limit) : allProducts;
-        renderProducts(container, products);
+        allProducts = await response.json();
+        
+        // Calculate products per page based on screen size
+        updateProductsPerPage();
+        
+        // Render initial batch of products
+        renderProductBatch(container);
+        
+        // Add Load More button
+        addLoadMoreButton(container);
+        
+        // Add intersection observer for infinite scroll
+        setupInfiniteScroll(container);
+        
     } catch (err) {
         console.warn("⚠️ Backend unavailable. Loading demo products...");
-        const demoProducts = getDemoProducts();
-        const products = limit ? demoProducts.slice(0, limit) : demoProducts;
-        renderProducts(container, products);
+        allProducts = getDemoProducts();
+        renderProductBatch(container);
     }
+}
+
+// Function to update products per page based on screen size
+function updateProductsPerPage() {
+    const width = window.innerWidth;
+    if (width >= 2000) {
+        productsPerPage = 15; // 5 columns x 3 rows
+    } else if (width >= 1600) {
+        productsPerPage = 12; // 4 columns x 3 rows
+    } else if (width >= 1200) {
+        productsPerPage = 9; // 3 columns x 3 rows
+    } else if (width >= 768) {
+        productsPerPage = 6; // 2 columns x 3 rows
+    } else {
+        productsPerPage = 4; // 1 column x 4 rows
+    }
+}
+
+// Function to render a batch of products
+function renderProductBatch(container) {
+    const startIndex = (currentPage - 1) * productsPerPage;
+    const endIndex = startIndex + productsPerPage;
+    const productsToRender = allProducts.slice(startIndex, endIndex);
+    
+    if (currentPage === 1) {
+        container.innerHTML = '';
+    }
+    
+    productsToRender.forEach(product => {
+        const imagePath = product.picture_url ? `/static/assets/products/${product.picture_url}` : '/static/assets/default-product.jpg';
+        const variations = product.variations || [];
+        const sizes = [...new Set(variations.map(v => v.size))].join(', ') || 'No sizes available';
+        const colors = [...new Set(variations.map(v => v.color))].join(', ') || 'No colors available';
+        
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        productCard.dataset.category = product.category_name;
+        productCard.dataset.variations = JSON.stringify(variations);
+        
+        productCard.innerHTML = `
+            <div class="clickable-area" onclick="window.location.href='/product?id=${product.product_id}'">
+                <img src="${imagePath}" alt="${product.name}" loading="lazy">
+                <div class="product-category">
+                    <span>${product.category_name}</span>
+                </div>
+                <h4>${product.name}</h4>
+                <p>${product.description}</p>
+                <div class="variations-info">
+                    <p>Sizes: ${sizes}</p>
+                    <p>Colors: ${colors}</p>
+                </div>
+            </div>
+            <button class="wishlist-btn" onclick="event.stopPropagation(); saveToWishlist(${product.product_id})">
+                <i class="fas fa-heart"></i> Add to Wishlist
+            </button>
+        `;
+        
+        container.appendChild(productCard);
+    });
+}
+
+// Function to add Load More button
+function addLoadMoreButton(container) {
+    const loadMoreContainer = document.createElement('div');
+    loadMoreContainer.className = 'load-more-container';
+    
+    const button = document.createElement('button');
+    button.className = 'load-more-btn';
+    button.textContent = 'Load More Products';
+    button.onclick = () => loadMoreProducts(container);
+    
+    if (currentPage * productsPerPage >= allProducts.length) {
+        button.disabled = true;
+        button.textContent = 'No More Products';
+    }
+    
+    loadMoreContainer.appendChild(button);
+    container.parentNode.insertBefore(loadMoreContainer, container.nextSibling);
+}
+
+// Function to load more products
+async function loadMoreProducts(container) {
+    if (isLoading) return;
+    
+    isLoading = true;
+    const loadMoreBtn = document.querySelector('.load-more-btn');
+    if (loadMoreBtn) {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.innerHTML = '<div class="loading-spinner" style="display: inline-block; width: 20px; height: 20px; margin-right: 10px;"></div> Loading...';
+    }
+    
+    currentPage++;
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading delay
+    renderProductBatch(container);
+    
+    isLoading = false;
+    if (loadMoreBtn) {
+        if (currentPage * productsPerPage >= allProducts.length) {
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.textContent = 'No More Products';
+        } else {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Load More Products';
+        }
+    }
+}
+
+// Setup infinite scroll
+function setupInfiniteScroll(container) {
+    const options = {
+        root: null,
+        rootMargin: '100px',
+        threshold: 0.1
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !isLoading && currentPage * productsPerPage < allProducts.length) {
+                loadMoreProducts(container);
+            }
+        });
+    }, options);
+    
+    // Observe the last product card
+    const lastCard = container.querySelector('.product-card:last-child');
+    if (lastCard) {
+        observer.observe(lastCard);
+    }
+}
+
+// Add window resize listener to update layout
+window.addEventListener('resize', debounce(() => {
+    const oldPerPage = productsPerPage;
+    updateProductsPerPage();
+    
+    if (oldPerPage !== productsPerPage) {
+        currentPage = 1;
+        const container = document.getElementById('productContainer');
+        if (container) {
+            renderProductBatch(container);
+            addLoadMoreButton(container);
+        }
+    }
+}, 250));
+
+// Debounce helper function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
 // Product Suggestions (Homepage)
@@ -436,21 +618,28 @@ function renderProducts(container, products) {
     container.innerHTML = "";
     products.forEach(product => {
         const imagePath = product.picture_url ? `/static/assets/products/${product.picture_url}` : '/static/assets/default-product.jpg';
+        const variations = product.variations || [];
+        const sizes = [...new Set(variations.map(v => v.size))].join(', ') || 'No sizes available';
+        const colors = [...new Set(variations.map(v => v.color))].join(', ') || 'No colors available';
+        
         container.innerHTML += `
         <div class="product-card" 
              data-category="${product.category_name}"
-             data-variations='${JSON.stringify(product.variations || [])}'>
+             data-variations='${JSON.stringify(variations)}'>
             <div class="clickable-area" onclick="window.location.href='/product?id=${product.product_id}'">
-                <img src="${imagePath}" alt="${product.name}" style="max-width: 100%; height: auto;">
+                <img src="${imagePath}" alt="${product.name}" loading="lazy">
+                <div class="product-category">
+                    <span>${product.category_name}</span>
+                </div>
                 <h4>${product.name}</h4>
                 <p>${product.description}</p>
-                <p class="product-category">Category: ${product.category_name}</p>
-                <div class="variations-summary">
-                    ${renderVariationsSummary(product.variations)}
+                <div class="variations-info">
+                    <p>Sizes: ${sizes}</p>
+                    <p>Colors: ${colors}</p>
                 </div>
             </div>
             <button class="wishlist-btn" onclick="event.stopPropagation(); saveToWishlist(${product.product_id})">
-                <i class="fas fa-heart"></i> Save to Wish List
+                <i class="fas fa-heart"></i> Add to Wishlist
             </button>
         </div>
         `;
