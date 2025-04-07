@@ -475,6 +475,7 @@ COPY public.categories (category_id, name) FROM stdin;
 12	Tights
 13	TShirts
 14	Polo
+19	Trial Category
 \.
 
 
@@ -500,10 +501,7 @@ COPY public.product_logs (log_id, product_id, admin_id, action_type, "timestamp"
 14	\N	3	Edited	2025-03-31 18:19:08.079842
 15	\N	3	Added Variation	2025-03-31 18:19:27.749261
 17	\N	3	Deleted	2025-03-31 21:46:11.941757
-18	5	3	Added	2025-03-31 21:50:57.066606
 19	6	3	Added	2025-03-31 21:51:59.189713
-20	5	3	Added Variation	2025-03-31 21:52:07.419909
-21	5	3	Added Variation	2025-03-31 21:52:13.12316
 22	6	3	Added Variation	2025-03-31 21:52:28.420075
 23	6	3	Added Variation	2025-03-31 21:52:42.854366
 24	7	3	Added	2025-03-31 21:53:47.351094
@@ -571,6 +569,16 @@ COPY public.product_logs (log_id, product_id, admin_id, action_type, "timestamp"
 86	25	3	Added Variation	2025-03-31 22:29:33.14597
 87	27	3	Added	2025-04-01 12:22:49.790503
 88	27	3	Added Variation	2025-04-01 12:23:14.766641
+90	6	3	Edited	2025-04-06 19:32:33.08618
+91	28	3	Added	2025-04-06 19:32:58.694128
+18	\N	3	Added	2025-03-31 21:50:57.066606
+20	\N	3	Added Variation	2025-03-31 21:52:07.419909
+21	\N	3	Added Variation	2025-03-31 21:52:13.12316
+89	\N	3	Edited	2025-04-06 19:28:04.450108
+92	\N	3	Added Variation	2025-04-06 19:34:02.174228
+93	\N	3	Deleted Variation	2025-04-06 19:35:24.395015
+94	\N	3	Deleted Variation	2025-04-06 19:35:27.496614
+95	\N	3	Deleted	2025-04-06 19:35:27.498794
 \.
 
 
@@ -579,8 +587,6 @@ COPY public.product_logs (log_id, product_id, admin_id, action_type, "timestamp"
 --
 
 COPY public.product_variations (variation_id, product_id, size, color) FROM stdin;
-7	5	L	Black
-8	5	M	Black
 9	6	L	Black
 10	6	S	Black
 11	7	L	Navy
@@ -634,8 +640,6 @@ COPY public.product_variations (variation_id, product_id, size, color) FROM stdi
 --
 
 COPY public.products (product_id, name, description, price, category_id, picture_url, created_at, updated_at) FROM stdin;
-5	Helly Hansen Rain Jacket	Helly Hansen Men's Vancouver Rain Jacket	130.00	6	helly-hansen-men-s-vancouver-rain-jacket-1d32dca1-71ae-4938-9607-6c5ea477d458-jpgrendition.jpg	2025-03-31 21:50:15.980531	2025-03-31 21:50:15.980531
-6	Helly Hansen Dubliner Jacket	Helly Hansen Men's Dubliner Jacket	169.99	6	hh-mens-dubliner-jacket-s19-black-990-s--ed8424d7-3022-41ac-9f4f-b367ef7b9b18-jpgrendition.jpg	2025-03-31 21:50:57.067979	2025-03-31 21:50:57.067979
 7	Helly Hansen Crew Jacket	Helly Hansen Men's Crew Jacket 2.0	199.99	6	helly-hansen-men-s-crew-jacket-2-0-1024-nvy-bf8a5713-2a3c-4c5a-8a01-77b093f43e42-jpgrendition.jpg	2025-03-31 21:52:42.85522	2025-03-31 21:52:42.85522
 8	Under Armour Short Sleeve Hoodie	Under Armour Men's Project Rock Short Sleeve Hoodie	56.97	7	under-armour-men-s-project-rock-essential-pullover-short-sleeve-hoodie-eca4ad08-d242-4a59-8375-4efa53ec5c38-jpgrendition.jpg	2025-03-31 21:56:34.084331	2025-03-31 21:56:34.084331
 9	FWD Three Quarter Sleeve Top	FWD Men's Sportswear Henley Three Quarter Sleeve Top	14.97	8	fwd-men-s-sportswear-henley-3-4-sleeve-top-a187ef98-cd71-4d2a-bfe3-7a9d2386a5e8-jpgrendition.jpg	2025-03-31 21:57:41.196958	2025-03-31 21:57:41.196958
@@ -657,6 +661,8 @@ COPY public.products (product_id, name, description, price, category_id, picture
 25	Under Armour Shorts	Under Armour Men's Tech Mesh 9 Inch Regular Fit Shorts	35.00	9	ua-tech-mesh-short-q219-black-pitch-gray-s--c1db5ec2-0e88-4a2d-baf4-8dc1f95220b7-jpgrendition.jpg	2025-03-31 22:28:04.357398	2025-03-31 22:28:04.357398
 26	Nike Jogger Pants	Nike Sportswear Men's Club Brushed Back Jogger Pants	75.00	12	nike-nsw-club-bb-jogger-pant-410-navy-s--224b2c6d-96f8-46eb-a338-cd99c61808fc-jpgrendition.jpg	2025-03-31 22:28:17.897933	2025-03-31 22:28:17.897933
 27	Ontario Tech Hoodie	Hoodie	30.00	7	OntarioTech.jpeg	2025-04-01 11:10:51.01056	2025-04-01 11:10:51.01056
+6	Helly Hansen Dubliner Jacket	Helly Hansen Men's Dubliner Jacket	130.00	6	hh-mens-dubliner-jacket-s19-black-990-s--ed8424d7-3022-41ac-9f4f-b367ef7b9b18-jpgrendition.jpg	2025-03-31 21:50:57.067979	2025-04-06 19:32:03.611115
+28	Trial Product	Trial	100.00	19	OntarioTech.jpeg	2025-04-06 19:32:33.088359	2025-04-06 19:32:33.088359
 \.
 
 
@@ -667,6 +673,7 @@ COPY public.products (product_id, name, description, price, category_id, picture
 COPY public.reviews (review_id, email, product_id, rating, comment, created_at) FROM stdin;
 1	info@jaspartapgoomer.com	9	5	Amazing quality	2025-04-03 14:58:34.873056
 2	trial@example.com	9	3	Not that great	2025-04-03 15:01:33.218794
+3	trial@example.com	27	5	trial	2025-04-06 23:44:06.727411
 \.
 
 
@@ -686,6 +693,8 @@ COPY public.users (email, password_hash, first_name, last_name, birthdate, creat
 info@jaspartapgoomer.com	123	Jaspartap	Goomer	\N	2025-03-30 17:43:37.999602
 someone@example.com	Jaspartap@15	Jane	Doe	\N	2025-04-03 14:59:13.433916
 trial@example.com	123	Trial	Account	\N	2025-04-03 15:00:33.713189
+trial@trial.com	123	trial	Acount	\N	2025-04-06 23:26:42.324279
+name@trial.com	123	Trial		\N	2025-04-06 23:48:10.676868
 \.
 
 
@@ -695,7 +704,7 @@ trial@example.com	123	Trial	Account	\N	2025-04-03 15:00:33.713189
 
 COPY public.wishlist (wishlist_id, email, product_id, added_at) FROM stdin;
 16	info@jaspartapgoomer.com	27	2025-04-01 16:23:24.940163
-19	trial@example.com	7	2025-04-06 21:03:34.105651
+23	trial@trial.com	28	2025-04-06 23:34:25.701539
 \.
 
 
@@ -710,35 +719,35 @@ SELECT pg_catalog.setval('public.admins_admin_id_seq', 3, true);
 -- Name: categories_category_id_seq; Type: SEQUENCE SET; Schema: public; Owner: jaspartapgoomer
 --
 
-SELECT pg_catalog.setval('public.categories_category_id_seq', 18, true);
+SELECT pg_catalog.setval('public.categories_category_id_seq', 19, true);
 
 
 --
 -- Name: product_logs_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: jaspartapgoomer
 --
 
-SELECT pg_catalog.setval('public.product_logs_log_id_seq', 88, true);
+SELECT pg_catalog.setval('public.product_logs_log_id_seq', 95, true);
 
 
 --
 -- Name: product_variations_variation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: jaspartapgoomer
 --
 
-SELECT pg_catalog.setval('public.product_variations_variation_id_seq', 53, true);
+SELECT pg_catalog.setval('public.product_variations_variation_id_seq', 54, true);
 
 
 --
 -- Name: products_product_id_seq; Type: SEQUENCE SET; Schema: public; Owner: jaspartapgoomer
 --
 
-SELECT pg_catalog.setval('public.products_product_id_seq', 27, true);
+SELECT pg_catalog.setval('public.products_product_id_seq', 28, true);
 
 
 --
 -- Name: reviews_review_id_seq; Type: SEQUENCE SET; Schema: public; Owner: jaspartapgoomer
 --
 
-SELECT pg_catalog.setval('public.reviews_review_id_seq', 2, true);
+SELECT pg_catalog.setval('public.reviews_review_id_seq', 3, true);
 
 
 --
@@ -752,7 +761,7 @@ SELECT pg_catalog.setval('public.user_preferences_preference_id_seq', 1, false);
 -- Name: wishlist_wishlist_id_seq; Type: SEQUENCE SET; Schema: public; Owner: jaspartapgoomer
 --
 
-SELECT pg_catalog.setval('public.wishlist_wishlist_id_seq', 19, true);
+SELECT pg_catalog.setval('public.wishlist_wishlist_id_seq', 23, true);
 
 
 --

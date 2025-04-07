@@ -235,3 +235,143 @@ Please read CONTRIBUTING.md for details on our code of conduct and the process f
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
+
+# Fashion Catalog System
+
+A comprehensive fashion catalog management system with user and admin interfaces, built with FastAPI, PostgreSQL, and modern web technologies.
+
+## Key Features
+
+### User Features
+- **Product Browsing**: View products with detailed information including:
+  - Product images
+  - Descriptions
+  - Categories
+  - Price information
+  - Available variations (size and color)
+- **Product Variations**: View available size and color options for each product
+- **Wishlist Management**: Save favorite products for later
+- **User Reviews**: 
+  - Rate products (1-5 stars)
+  - Add detailed comments
+  - View average ratings
+  - See review history with timestamps
+- **User Preferences**: Save preferred sizes and colors by category
+
+### Admin Features
+- **Complete Product Management**:
+  - Add new products
+  - Edit existing products
+  - Delete products (automatically removes associated variations)
+  - Upload product images
+- **Category Management**:
+  - Create categories
+  - Edit categories
+  - Delete categories
+- **Variation Management**:
+  - Add size and color variations
+  - Edit existing variations
+  - Delete variations
+- **Admin User Management**:
+  - Create admin accounts
+  - Manage admin permissions
+- **Comprehensive Logging**:
+  - Track all product-related actions
+  - View logs by product ID
+  - Filter logs by admin ID
+  - Search by action type
+  - Timestamp tracking for all changes
+
+### Database Features
+- **Relational Database Structure**:
+  - Products table with category relationships
+  - Product variations with size and color options
+  - User accounts and preferences
+  - Review system with ratings and comments
+  - Wishlist functionality
+  - Comprehensive logging system
+- **Data Integrity**:
+  - Cascading deletes for product variations
+  - Foreign key constraints
+  - Unique indexes for data consistency
+  - Automatic timestamp tracking
+
+### Technical Features
+- **Modern Web Stack**:
+  - FastAPI backend
+  - PostgreSQL database
+  - Responsive frontend
+  - RESTful API endpoints
+- **Security**:
+  - Password hashing
+  - Admin authentication
+  - User session management
+- **Error Handling**:
+  - Graceful fallbacks
+  - Comprehensive logging
+  - User-friendly error messages
+
+## Database Schema
+
+The system uses a PostgreSQL database with the following main tables:
+
+1. **users**: User account information
+2. **categories**: Product categories
+3. **products**: Main product information
+4. **product_variations**: Size and color options
+5. **user_preferences**: User size and color preferences
+6. **wishlist**: Saved products
+7. **reviews**: Product ratings and comments
+8. **admins**: Admin user accounts
+9. **product_logs**: Action tracking and auditing
+
+## Setup Instructions
+
+1. Install PostgreSQL and create a new database
+2. Clone the repository
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Set up the database:
+   ```bash
+   psql -U your_username -d your_database -f db.sql
+   ```
+5. Configure environment variables:
+   - DATABASE_URL
+   - SECRET_KEY
+   - ADMIN_EMAIL
+   - ADMIN_PASSWORD
+
+6. Start the application:
+   ```bash
+   uvicorn script:app --reload
+   ```
+
+## Usage
+
+### Admin Interface
+Access the admin interface at `/admin` to:
+- Manage products and categories
+- View and filter logs
+- Manage admin users
+- Monitor system activity
+
+### User Interface
+The main interface allows users to:
+- Browse products by category
+- View product details and variations
+- Save products to wishlist
+- Leave reviews and ratings
+- Manage preferences
+
+## Security Notes
+- All passwords are hashed before storage
+- Admin actions are logged for auditing
+- User sessions are managed securely
+- API endpoints are protected with authentication
+
+## Contributing
+Feel free to submit issues and enhancement requests!
+
+---
